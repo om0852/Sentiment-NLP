@@ -6,10 +6,10 @@ from typing import Dict, List, Set
 class NegationHandler:
     def __init__(self, dict_path: str = None):
         if dict_path is None:
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            dict_path = os.path.join(base_dir, "data", "dictionaries", "negation_dict.json")
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            dict_path = os.path.join(project_root, "data", "dictionaries", "negation_dict.json")
             if not os.path.exists(dict_path):
-                dict_path = r"C:\Users\salun\.gemini\antigravity-ide\brain\8a79ec98-d44f-4a02-ae10-56c0e06f4c25\scratch\negation_dict.json"
+                dict_path = os.path.join(os.getcwd(), "data", "dictionaries", "negation_dict.json")
 
         with open(dict_path, "r", encoding="utf-8") as f:
             data = json.load(f)

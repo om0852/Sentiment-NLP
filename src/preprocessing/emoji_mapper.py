@@ -5,11 +5,10 @@ from typing import Dict, Any
 class EmojiMapper:
     def __init__(self, emoji_dict_path: str = None):
         if emoji_dict_path is None:
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            emoji_dict_path = os.path.join(base_dir, "data", "dictionaries", "emoji_dict.json")
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            emoji_dict_path = os.path.join(project_root, "data", "dictionaries", "emoji_dict.json")
             if not os.path.exists(emoji_dict_path):
-                # Fallback to local scratch
-                emoji_dict_path = r"C:\Users\salun\.gemini\antigravity-ide\brain\8a79ec98-d44f-4a02-ae10-56c0e06f4c25\scratch\emoji_dict.json"
+                emoji_dict_path = os.path.join(os.getcwd(), "data", "dictionaries", "emoji_dict.json")
 
         with open(emoji_dict_path, "r", encoding="utf-8") as f:
             self.emoji_dict: Dict[str, Dict[str, Any]] = json.load(f)
