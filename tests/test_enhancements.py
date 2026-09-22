@@ -107,3 +107,20 @@ def test_api_dashboard_and_metrics():
         m_data = m_res.json()
         assert "cache_stats" in m_data
         assert "active_learning_queued" in m_data
+
+def test_complex_real_world_posts():
+    with TestClient(app) as client:
+        # Case 1: Double negation phone praise
+        post1 = "Not gonna lie, I thought this phone would be mid but ngl it's actually not bad at all, kinda impressed ngl"
+        res1 = client.post("/predict", json={"texts": [post1]}).json()
+        item1 = res1["results"][0]
+        assert item1["label"] == "positive"
+        assert item1["probabilities"]["positive"] > 0.80
+
+        # Case 2: Flight delayed heavy sarcasm with 🙃 and 💀
+        post2 = "Oh great, my flight got delayed by 6 hours AGAIN 🙃 love spending my birthday in an airport lounge eating stale sandwiches, living my best life fr fr 💀"
+        res2 = client.post("/predict", json={"texts": [post2]}).json()
+        item2 = res2["results"][0]
+        assert item2["label"] == "negative"
+        assert item2["probabilities"]["negative"] > 0.85
+        assert item2["reason"] == "sarcastic_irony_detected"

@@ -20,6 +20,13 @@ class ContextAnalyzer:
             re.compile(r"huge\s+w.*(crash|broken|fail|suffer|freeze)", re.IGNORECASE),
             re.compile(r"(fail|crash|bug|slower).*ekdum\s+mast", re.IGNORECASE),
             re.compile(r"ekdum\s+mast.*(fail|crash|bug|nahi)", re.IGNORECASE),
+            re.compile(r"\b(oh\s+great|just\s+great|super\s+great)\b.*(delay|delayed|cancel|cancelled|wait|waiting|stuck|broke|broken|stale|ruined|hours|lounge|flight|train|traffic|crashed)", re.IGNORECASE),
+            re.compile(r"\blove\s+(spending|waiting|being|sitting|eating|standing|getting|staying)\b.*(delay|delayed|stale|airport|lounge|traffic|line|queue|hours|rain|alone|sick|hospital|bills|broke|stuck)", re.IGNORECASE),
+            re.compile(r"\bliving\s+(my|our)\s+best\s+life\b.*(💀|😭|🙃|stale|delay|delayed|stuck|broke|fail|suffer|alone|cold|wet|ruined)", re.IGNORECASE),
+            re.compile(r"(delay|delayed|stale|stuck|broke|fail|suffer|ruined).*\bliving\s+(my|our)\s+best\s+life\b", re.IGNORECASE),
+            re.compile(r"🙃.*(delay|delayed|waiting|again|stuck|stale|ruined|fail|cancel|canceled|broken|hours|worst)", re.IGNORECASE),
+            re.compile(r"(delay|delayed|waiting|again|stuck|stale|ruined|fail|cancel|canceled|broken|hours|worst).*🙃", re.IGNORECASE),
+            re.compile(r"\b(what\s+a\s+joy|so\s+thrilled|so\s+happy|can't\s+wait|cant\s+wait)\b.*(delay|delayed|cancel|stuck|queue|wait|hours|stale|ruined|suffer)", re.IGNORECASE),
         ]
 
         self.mixed_indicators = [

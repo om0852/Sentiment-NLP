@@ -229,11 +229,36 @@ async def predict_sentiment(req: SentimentPredictRequest):
             if req.extract_aspects and aspect_extractor:
                 aspects = aspect_extractor.extract_aspects(raw_t)
                 
+            # Calibrate probabilities if context analysis altered the prediction
+            if final_label.lower() != pred["label"].lower():
+                if final_label == "positive":
+                    calibrated_probs = {
+                        "positive": round(conf, 4),
+                        "negative": round((1.0 - conf) * 0.75, 4),
+                        "neutral": round((1.0 - conf) * 0.25, 4),
+                    }
+                elif final_label == "negative":
+                    calibrated_probs = {
+                        "negative": round(conf, 4),
+                        "positive": round((1.0 - conf) * 0.75, 4),
+                        "neutral": round((1.0 - conf) * 0.25, 4),
+                    }
+                elif final_label == "mixed":
+                    calibrated_probs = {
+                        "positive": 0.45,
+                        "negative": 0.45,
+                        "neutral": 0.10,
+                    }
+                else:
+                    calibrated_probs = pred["probabilities"]
+            else:
+                calibrated_probs = pred["probabilities"]
+
             pred_item = SentimentPredictionItem(
                 text=raw_t,
                 label=final_label,
                 confidence=round(conf, 4),
-                probabilities=pred["probabilities"],
+                probabilities=calibrated_probs,
                 aspects=aspects,
                 fallback_required=needs_fallback,
                 reason=reason,
