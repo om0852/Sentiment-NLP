@@ -1,0 +1,27 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Data feedback and raw downloads (keep dictionaries and model!)
+data/feedback_queue.jsonl
+data/raw/
+data/processed/
+
+# Keep models and dictionaries
+!models/sentiment_model.joblib
+!data/dictionaries/
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+*.log

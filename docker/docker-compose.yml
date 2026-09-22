@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  sentiment-engine:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: sentiment-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - JEV_API_URL=https://api.jev.ai/v1/sentiment
+      - JEV_API_KEY=mock-jev-key
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 300M
+        reservations:
+          cpus: '0.05'
+          memory: 100M
+    restart: unless-stopped
