@@ -6,6 +6,7 @@ class SentimentLRUCache:
     """
     High-performance in-memory LRU cache for viral/duplicate social posts.
     Stores up to `max_size` entries (~3-5MB RAM), delivering 0.005 ms hit latency.
+    Supports optional parent context hashing for thread-aware sentiment caching.
     """
     def __init__(self, max_size: int = 10000):
         self.max_size = max_size
@@ -13,13 +14,18 @@ class SentimentLRUCache:
         self.hits = 0
         self.misses = 0
 
-    def _hash_key(self, text: str) -> str:
+    def _hash_key(self, text: str, context: Optional[str] = None) -> str:
         # Normalize text to maximize cache hit rate on whitespace/casing variations
         normalized = " ".join(text.lower().split())
-        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        if context and isinstance(context, str) and context.strip():
+            norm_ctx = " ".join(context.lower().split())
+            combined = f"{normalized}|||ctx:{norm_ctx}"
+        else:
+            combined = normalized
+        return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
-    def get(self, text: str) -> Optional[Dict[str, Any]]:
-        key = self._hash_key(text)
+    def get(self, text: str, context: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        key = self._hash_key(text, context=context)
         if key in self.cache:
             self.hits += 1
             # Move to end to mark as recently used
@@ -32,8 +38,8 @@ class SentimentLRUCache:
         self.misses += 1
         return None
 
-    def put(self, text: str, result: Dict[str, Any]):
-        key = self._hash_key(text)
+    def put(self, text: str, result: Dict[str, Any], context: Optional[str] = None):
+        key = self._hash_key(text, context=context)
         if key in self.cache:
             self.cache.move_to_end(key)
         else:

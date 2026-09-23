@@ -1,14 +1,20 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any
 
+class PostInput(BaseModel):
+    text: str = Field(..., description="Post text to analyze")
+    context: Optional[str] = Field(None, description="Optional parent post, topic title, or incident context")
+
 class SentimentPredictRequest(BaseModel):
-    texts: List[str] = Field(..., description="Array of post texts to analyze", min_length=1)
+    texts: Optional[List[str]] = Field(None, description="Array of post texts to analyze (simple mode)")
+    posts: Optional[List[PostInput]] = Field(None, description="Array of posts with optional parent/thread context (contextual mode)")
     confidence_threshold: Optional[float] = Field(0.60, description="Confidence threshold below which fallback is required", ge=0.0, le=1.0)
     enable_fallback: Optional[bool] = Field(False, description="Whether to immediately route low-confidence posts to Jev API fallback")
     extract_aspects: Optional[bool] = Field(True, description="Whether to extract aspect-based sentiments (UI, speed, support, pricing)")
 
 class SentimentPredictionItem(BaseModel):
     text: str
+    context: Optional[str] = None
     label: str
     confidence: float
     probabilities: Dict[str, float]
@@ -24,7 +30,7 @@ class SentimentPredictResponse(BaseModel):
     fallback_count: int
     cache_hits: int = 0
     batch_latency_ms: float
-    model_version: str = "tfidf-context-absa-v3"
+    model_version: str = "tfidf-context-absa-v4"
 
 class HealthResponse(BaseModel):
     status: str

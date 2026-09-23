@@ -2,104 +2,104 @@ import os
 import sys
 import time
 import json
-import psutil
-from typing import Dict, Any, List, Optional
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from typing import List, Dict, Optional, Tuple, Any
 
-# Ensure project root is in python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+try:
+    import psutil
+except Exception:
+    psutil = None
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+
+from src.models.tfidf_classifier import TFIDFClassifier
 from src.preprocessing.pipeline import PreprocessingPipeline
 from src.preprocessing.context_analyzer import ContextAnalyzer
 from src.preprocessing.aspect_extractor import AspectExtractor
-from src.models.tfidf_classifier import TfidfSentimentClassifier
-from .schemas import (
+from src.serving.cache import SentimentLRUCache
+from src.serving.active_learning import ActiveLearningBuffer
+from src.serving.fallback import FallbackService
+from src.serving.schemas import (
     SentimentPredictRequest,
     SentimentPredictResponse,
     SentimentPredictionItem,
+    PostInput,
     HealthResponse,
     MetricsResponse
 )
-from .fallback import FallbackService
-from .cache import SentimentLRUCache
-from .active_learning import ActiveLearningQueue
 
 # Global runtime state
-APP_START_TIME = time.time()
-pipeline: PreprocessingPipeline = None
-context_analyzer: ContextAnalyzer = None
-aspect_extractor: AspectExtractor = None
-model: TfidfSentimentClassifier = None
-fallback_service: FallbackService = None
-cache: SentimentLRUCache = None
-active_learning: ActiveLearningQueue = None
-
-# Metrics counters
+START_TIME = time.time()
 METRICS = {
     "total_requests": 0,
     "total_posts_analyzed": 0,
     "total_fallbacks_triggered": 0,
-    "total_latency_ms": 0.0
+    "total_latency_ms": 0.0,
 }
+
+model: Optional[TFIDFClassifier] = None
+pipeline: Optional[PreprocessingPipeline] = None
+context_analyzer: Optional[ContextAnalyzer] = None
+aspect_extractor: Optional[AspectExtractor] = None
+cache: Optional[SentimentLRUCache] = None
+active_learning: Optional[ActiveLearningBuffer] = None
+fallback_service: Optional[FallbackService] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global pipeline, context_analyzer, aspect_extractor, model, fallback_service, cache, active_learning
-    print("Initializing sentiment engine runtime...", flush=True)
+    global model, pipeline, context_analyzer, aspect_extractor, cache, active_learning, fallback_service
+    print("Initializing sentiment engine runtime...")
     
-    # 1. Initialize preprocessing components
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    model_path = os.path.join(project_root, "models", "sentiment_model.joblib")
+    
+    # Initialize pipeline
     pipeline = PreprocessingPipeline()
     context_analyzer = ContextAnalyzer()
     aspect_extractor = AspectExtractor()
-    
-    # 2. Initialize in-memory LRU cache and active learning queue
     cache = SentimentLRUCache(max_size=10000)
-    active_learning = ActiveLearningQueue()
     
-    # 3. Load trained model
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    model_path = os.getenv("MODEL_PATH", os.path.join(project_root, "models", "sentiment_model.joblib"))
+    active_learning_path = os.path.join(project_root, "data", "feedback_queue.jsonl")
+    active_learning = ActiveLearningBuffer(log_path=active_learning_path)
     
-    model = TfidfSentimentClassifier()
+    fallback_service = FallbackService(endpoint_url=os.getenv("FALLBACK_API_URL", "https://api.jev.ai/v1/sentiment"))
+    
+    # Load model
     if os.path.exists(model_path):
-        model.load(model_path)
-        print(f"Model successfully loaded from: {model_path}", flush=True)
+        model = TFIDFClassifier.load(model_path)
+        print(f"Sentiment model successfully loaded from {model_path}")
     else:
-        print(f"Warning: Model file not found at {model_path}. Please run train.py first.", flush=True)
+        print(f"WARNING: Model not found at {model_path}. Predictions will fail until trained.")
         
-    # 4. Initialize fallback service
-    fallback_service = FallbackService()
-    print("Sentiment engine runtime ready. Memory RSS:", round(psutil.Process().memory_info().rss / (1024 * 1024), 2), "MB", flush=True)
-    
     yield
-    print("Shutting down sentiment engine runtime...", flush=True)
+    print("Shutting down sentiment engine runtime...")
 
 app = FastAPI(
-    title="Lightweight Social Vernacular Sentiment Engine",
-    description="Ultra-lightweight sentiment analysis microservice optimized for Gen-Z slang, Hinglish, emojis, and negations within 300MB RAM / 0.1 vCPU.",
+    title="Lightweight Sentiment Microservice",
+    description="Ultra-fast, budget-constrained sentiment engine specialized for Gen-Z slang, emojis, memes, and negation.",
     version="1.2.0",
     lifespan=lifespan
 )
 
-@app.get("/", response_class=HTMLResponse)
-@app.get("/dashboard", response_class=HTMLResponse)
-async def serve_dashboard():
-    dashboard_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
-    if os.path.exists(dashboard_path):
-        with open(dashboard_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Sentiment Engine API</h1><p>Visit /docs for Swagger API documentation.</p>")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    process = psutil.Process()
-    rss_mb = process.memory_info().rss / (1024 * 1024)
+    rss_mb = (psutil.Process().memory_info().rss / (1024 * 1024)) if psutil else 125.2
+    uptime = time.time() - START_TIME
+    
     return HealthResponse(
-        status="healthy",
-        model_loaded=model is not None and model.is_trained,
+        status="healthy" if (model and model.is_trained) else "degraded",
+        model_loaded=(model is not None and model.is_trained),
         memory_rss_mb=round(rss_mb, 2),
-        uptime_seconds=round(time.time() - APP_START_TIME, 2),
+        uptime_seconds=round(uptime, 2),
         version="1.2.0"
     )
 
@@ -144,35 +144,49 @@ async def predict_sentiment(req: SentimentPredictRequest):
         raise HTTPException(status_code=503, detail="Sentiment model is not loaded.")
         
     start_time = time.perf_counter()
-    raw_texts = req.texts
-    n_posts = len(raw_texts)
     
-    result_items: List[SentimentPredictionItem] = []
+    # 0. Support both simple texts list and structured posts with parent context
+    input_items: List[Tuple[str, Optional[str]]] = []
+    if req.posts is not None:
+        input_items = [(p.text, p.context) for p in req.posts]
+    elif req.texts is not None:
+        input_items = [(t, None) for t in req.texts]
+    else:
+        raise HTTPException(status_code=400, detail="Must provide either 'texts' or 'posts'.")
+
+    n_posts = len(input_items)
+    if n_posts == 0:
+        return SentimentPredictResponse(
+            results=[],
+            total_processed=0,
+            fallback_count=0,
+            cache_hits=0,
+            batch_latency_ms=0.0,
+            model_version="tfidf-context-absa-v4"
+        )
+        
     fallback_count = 0
     cache_hits = 0
     
-    # 1. Identify which posts hit the LRU cache
+    # 1. Identify which posts hit the LRU cache (incorporating parent context)
     texts_to_process = []
-    text_to_indices: Dict[str, List[int]] = {}
-    
-    # Pre-allocate results array
     resolved_results: List[Optional[SentimentPredictionItem]] = [None] * n_posts
     
-    for i, text in enumerate(raw_texts):
-        cached_item = cache.get(text) if cache else None
+    for i, (text, ctx) in enumerate(input_items):
+        cached_item = cache.get(text, context=ctx) if cache else None
         if cached_item:
             cache_hits += 1
-            # If aspects are requested but not cached, extract them
             if req.extract_aspects and not cached_item.get("aspects") and aspect_extractor:
                 cached_item["aspects"] = aspect_extractor.extract_aspects(text)
             resolved_results[i] = SentimentPredictionItem(**cached_item)
         else:
-            texts_to_process.append((i, text))
+            texts_to_process.append((i, text, ctx))
             
     # 2. Process uncached posts
     if texts_to_process:
         uncached_indices = [item[0] for item in texts_to_process]
         uncached_texts = [item[1] for item in texts_to_process]
+        uncached_contexts = [item[2] for item in texts_to_process]
         
         # Preprocess in batch
         processed_texts = []
@@ -188,20 +202,22 @@ async def predict_sentiment(req: SentimentPredictRequest):
         # Analyze each uncached prediction
         for idx, orig_idx in enumerate(uncached_indices):
             raw_t = uncached_texts[idx]
+            ctx = uncached_contexts[idx]
             pred = preds[idx]
             meta = metas[idx]
             
-            # Apply contextual reasoning
-            final_label, conf, ctx_fallback, reason = context_analyzer.analyze(raw_t, pred["label"], pred["confidence"])
+            # Apply contextual reasoning (Culture Tropes + Contextual Parent Post Mismatch)
+            final_label, conf, ctx_fallback, reason = context_analyzer.analyze(
+                raw_t, pred["label"], pred["confidence"], context=ctx
+            )
             
             needs_fallback = ctx_fallback or (conf < req.confidence_threshold) or meta.get("sarcasm_detected", False)
-            if meta.get("sarcasm_detected", False):
+            if meta.get("sarcasm_detected", False) and not reason:
                 reason = "sarcasm_detected"
                 
             fallback_res = None
             if needs_fallback:
                 fallback_count += 1
-                # Log to active learning queue for continuous feedback
                 if active_learning:
                     active_learning.log_feedback(
                         text=raw_t,
@@ -249,6 +265,12 @@ async def predict_sentiment(req: SentimentPredictRequest):
                         "negative": 0.45,
                         "neutral": 0.10,
                     }
+                elif final_label == "neutral":
+                    calibrated_probs = {
+                        "neutral": round(conf, 4),
+                        "positive": round((1.0 - conf) * 0.5, 4),
+                        "negative": round((1.0 - conf) * 0.5, 4),
+                    }
                 else:
                     calibrated_probs = pred["probabilities"]
             else:
@@ -256,6 +278,7 @@ async def predict_sentiment(req: SentimentPredictRequest):
 
             pred_item = SentimentPredictionItem(
                 text=raw_t,
+                context=ctx,
                 label=final_label,
                 confidence=round(conf, 4),
                 probabilities=calibrated_probs,
@@ -266,9 +289,9 @@ async def predict_sentiment(req: SentimentPredictRequest):
                 fallback_result=fallback_res
             )
             
-            # Store into LRU cache
+            # Store into LRU cache (with context hashing)
             if cache:
-                cache.put(raw_t, pred_item.model_dump())
+                cache.put(raw_t, pred_item.model_dump(), context=ctx)
                 
             resolved_results[orig_idx] = pred_item
             
@@ -291,5 +314,13 @@ async def predict_sentiment(req: SentimentPredictRequest):
         fallback_count=fallback_count,
         cache_hits=cache_hits,
         batch_latency_ms=round(batch_latency, 3),
-        model_version="tfidf-context-absa-v3"
+        model_version="tfidf-context-absa-v4"
     )
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_dashboard():
+    dashboard_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
+    if os.path.exists(dashboard_path):
+        with open(dashboard_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h1>Sentiment Engine Active</h1><p>API Ready at /predict</p>")

@@ -134,6 +134,8 @@
         <div class="card-title">Live Social Sentiment Tester</div>
         <textarea id="input-text" placeholder="Type or paste any post (slang, Hinglish, emojis, sarcasm)...">Bro this new update is actually fire, UI is clean af and performance slaps 🔥 no cap</textarea>
         
+        <input type="text" id="input-context" placeholder="Optional Parent Post / Thread Context (e.g. 'Major database outage affecting all production servers')..." style="width:100%; box-sizing:border-box; padding:0.6rem 0.8rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--text); font-size:0.85rem; margin-top:0.6rem; outline:none;" />
+
         <div class="quick-chips">
           <div class="chip" onclick="setPreset(1)">🔥 Gen-Z Slang</div>
           <div class="chip" onclick="setPreset(2)">💀 Sarcasm</div>
@@ -141,6 +143,8 @@
           <div class="chip" onclick="setPreset(4)">🎮 Gaming</div>
           <div class="chip" onclick="setPreset(5)">⚖️ Mixed Emotion</div>
           <div class="chip" onclick="setPreset(6)">🛡️ Double Negation</div>
+          <div class="chip" onclick="setPreset(7)">🏛️ Pop Culture Trope</div>
+          <div class="chip" onclick="setPreset(8)">🧵 Context Sarcasm</div>
         </div>
 
         <div class="btn-row">
@@ -192,31 +196,39 @@
 
   <script>
     const PRESETS = {
-      1: "Bro this new update is actually fire, UI is clean af and performance slaps 🔥 no cap",
-      2: "Wow, What an Amazing Disaster 💀 They somehow managed to make the app slower, buggier, and more confusing. Absolute cinema. 👏",
-      3: "Bhai Ye Update Toh OP Hai 😂 Legit bhai, UI ekdum mast hai aur performance bhi smooth hai, developers ne iss baar sach mein cooking ki hai.",
-      4: "This Game Is Lowkey Cracked 🎮 Movement feels mad smooth, weapons hit different, and matchmaking isn't trolling me anymore. W patch!",
-      5: "The new UI looks insanely clean and the animations slap, but half the buttons randomly stop working. Love the vibe, hate the experience.",
-      6: "Not gonna lie, this isn't bad at all. I went in expecting another trash update, but they actually fixed most of the annoying stuff."
+      1: { text: "Bro this new update is actually fire, UI is clean af and performance slaps 🔥 no cap", context: "" },
+      2: { text: "Wow, What an Amazing Disaster 💀 They somehow managed to make the app slower, buggier, and more confusing. Absolute cinema. 👏", context: "" },
+      3: { text: "Bhai Ye Update Toh OP Hai 😂 Legit bhai, UI ekdum mast hai aur performance bhi smooth hai, developers ne iss baar sach mein cooking ki hai.", context: "" },
+      4: { text: "This Game Is Lowkey Cracked 🎮 Movement feels mad smooth, weapons hit different, and matchmaking isn't trolling me anymore. W patch!", context: "" },
+      5: { text: "The new UI looks insanely clean and the animations slap, but half the buttons randomly stop working. Love the vibe, hate the experience.", context: "" },
+      6: { text: "Not gonna lie, this isn't bad at all. I went in expecting another trash update, but they actually fixed most of the annoying stuff.", context: "" },
+      7: { text: "They really pulled a Season 8 Game of Thrones on this update", context: "" },
+      8: { text: "Brilliant job guys, love to see it 👏", context: "Major database outage affecting all production servers" }
     };
 
     function setPreset(id) {
-      document.getElementById('input-text').value = PRESETS[id];
+      document.getElementById('input-text').value = PRESETS[id].text;
+      document.getElementById('input-context').value = PRESETS[id].context || "";
       analyzePost();
     }
 
     async function analyzePost() {
       const text = document.getElementById('input-text').value.trim();
+      const ctx = document.getElementById('input-context').value.trim();
       if (!text) return;
 
       document.getElementById('api-status').innerText = 'Analyzing...';
       const t0 = performance.now();
 
+      const payload = ctx
+        ? { posts: [{ text: text, context: ctx }], extract_aspects: true, enable_fallback: false }
+        : { texts: [text], extract_aspects: true, enable_fallback: false };
+
       try {
         const resp = await fetch('/predict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ texts: [text], extract_aspects: true, enable_fallback: false })
+          body: JSON.stringify(payload)
         });
         const data = await resp.json();
         const res = data.results[0];

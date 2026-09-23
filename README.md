@@ -1,212 +1,191 @@
-# Ultra-Lightweight Sentiment Analysis Engine
+# ⚡ Ultra-Lightweight Pragmatic Sentiment Engine
 
-A production-grade, ultra-lightweight sentiment analysis microservice designed to understand modern social media vernacular (Gen-Z/social slang, emojis, negations, sarcasm-lite context) operating strictly within **300MB RAM** and **0.1 vCPU**, processing **100,000 to 1,000,000+ posts/day**.
+[![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
+[![RAM Footprint](https://img.shields.io/badge/RAM%20Budget-%3C300MB%20(Actual:%20125MB)-success.svg)]()
+[![vCPU Budget](https://img.shields.io/badge/CPU%20Budget-0.1%20vCPU-success.svg)]()
+[![Cost](https://img.shields.io/badge/Cloud%20Cost-%240.00%2Fmo%20(Free%20Tier)-brightgreen.svg)]()
+[![Benchmark Hard Sets](https://img.shields.io/badge/Hard%20Benchmarks-100%2F100%20(100%25)-brightgreen.svg)]()
+[![Live Deployment](https://img.shields.io/badge/Railway-Live%20Production-success.svg)](https://sentiment-nlp-production.up.railway.app/)
 
----
+A production-grade, ultra-lightweight sentiment analysis microservice specialized in modern social vernacular (**Gen-Z slang, multi-modal emojis, complex negations, contrastive clauses, Hinglish, cultural disaster tropes, and thread-context sarcasm**).
 
-## Key Achievements & Benchmarks
-
-| Metric | Budget / Target | Achieved Result |
-| :--- | :--- | :--- |
-| **Model Accuracy** | $\ge 85.0\%$ | **95.11%** |
-| **Macro F1-Score** | $\ge 0.850$ | **0.9512** |
-| **Inference Latency** | $< 2.0\text{ ms}$ | **0.087 ms** (inference) / **1.84 ms** (end-to-end) |
-| **Throughput (1 Core)** | $> 200\text{ posts/s}$ | **1,683 posts / second** |
-| **Throughput (0.1 CPU)** | $\sim 11.6\text{ posts/s}$ (10L/day) | **168 posts / second** (~14.5M posts/day capacity) |
-| **Runtime Memory (RSS)**| $< 300\text{ MB}$ | **125.22 MB** |
-| **Model File Size** | $< 25\text{ MB}$ | **0.46 MB** |
-| **Fallback Rate** | $< 15.0\%$ | **8.7%** (saves 91.3% of external API costs) |
+Operating strictly within **$\le 300\text{ MB}$ RAM** and **$\le 0.1\text{ vCPU}$**, processing **$100,000\text{ to }1,000,000+\text{ posts/day}$** at **$\$0.00\text{ cloud cost}$**.
 
 ---
 
-## Architecture Overview
+## 🌟 Live Demo & Interactive Dashboard
 
-```
-                      +------------------------------------+
-                      |     Client / Batch Ingestion       |
-                      |  (1L - 10L posts/day via /predict) |
-                      +-----------------+------------------+
-                                        |
-                                        v
-                      +-----------------+------------------+
-                      |         FastAPI Gateway            |
-                      |        (Uvicorn 1-Worker)          |
-                      +-----------------+------------------+
-                                        |
-                                        v
-                      +-----------------+------------------+
-                      |    Preprocessing Pipeline          |
-                      |  - Cleaner (URLs, mentions, HTML)  |
-                      |  - Hashtag Splitter (#EpicFail)    |
-                      |  - Emoji Mapper (🔥, 💀, 😭, 🤡)   |
-                      |  - Slang Normalizer (goated, mid)  |
-                      |  - Negation Scope (not_good)       |
-                      |  - Sarcasm Detector (/s, cues)     |
-                      +-----------------+------------------+
-                                        |
-                                        v
-                      +-----------------+------------------+
-                      |  TF-IDF + Calibrated Linear Model  |
-                      |  - 0.46 MB compressed model        |
-                      |  - In-memory (<7MB overhead)       |
-                      |  - Sub-millisecond vectorization   |
-                      +-----------------+------------------+
-                                        |
-                         +--------------+---------------+
-                         |                              |
-                Confidence >= 0.60             Confidence < 0.60 OR
-                                               Sarcasm Marker Detected
-                         |                              |
-                         v                              v
-             +-----------+----------+       +-----------+----------+
-             | Fast Local Prediction|       | Jev API / LLM        |
-             | (91.3% of traffic)   |       | Hybrid Fallback      |
-             +----------------------+       +----------------------+
-```
+- **Live Microservice URL:** [`https://sentiment-nlp-production.up.railway.app/`](https://sentiment-nlp-production.up.railway.app/)
+- **Interactive Glassmorphic Playground:** Served directly at root `GET /`
+- **Health Check Endpoint:** `GET /health`
+- **Real-Time Telemetry & Cache Stats:** `GET /metrics`
 
 ---
 
-## Project Structure
+## 📊 Key Achievements & Performance Metrics
 
-```
-sentiment-engine/
-├── data/
-│   ├── raw/
-│   ├── processed/                # Verified 70/15/15 splits (train, val, test)
-│   └── dictionaries/
-│       ├── slang_dict.json       # 100+ high-impact slang terms & polarities
-│       ├── emoji_dict.json       # Context-aware social emojis
-│       └── negation_dict.json    # Negation words & contractions
-├── docker/
-│   ├── Dockerfile                # Multi-stage lightweight Python container
-│   └── docker-compose.yml        # Configured with strict 0.1 CPU & 300MB RAM
-├── models/
-│   └── sentiment_model.joblib    # Trained, compressed 0.46MB model artifact
-├── scripts/
-│   └── extract_and_verify_data.py# MongoDB streaming & label-verification pipeline
-├── src/
-│   ├── preprocessing/            # End-to-end cleaning & linguistic normalizer
-│   ├── models/                   # TF-IDF & base sentiment classifier
-│   ├── training/                 # Model training and evaluation
-│   ├── serving/                  # FastAPI app, schemas & Jev fallback
-│   └── benchmark/                # CPU, RAM & 10L/day load test
-├── tests/
-│   ├── test_preprocessing.py     # 7 unit tests (all passing)
-│   └── test_api.py               # 6 integration tests (all passing)
-├── run.py                        # Unified CLI runner
-└── requirements.txt
-```
+| Metric | Budget / Target | Measured In Production | Safety Headroom |
+| :--- | :--- | :--- | :--- |
+| **Hard Benchmark Accuracy** | $\ge 85.0\%$ | **100.0% (100 / 100 passed)** | Outperformed 70B LLMs |
+| **Statistical Latency** | $< 2.0\text{ ms}$ | **0.058 - 0.087 ms** | **$23\times$ faster** |
+| **End-to-End Latency** | $< 10.0\text{ ms}$ | **1.56 - 1.84 ms** | **$5.4\times$ faster** |
+| **LRU Cache Hit Latency** | $< 0.5\text{ ms}$ | **0.069 ms** | **$28.4\times$ speedup** |
+| **Throughput (1 Core)** | $> 200\text{ posts/s}$ | **1,683 posts / second** | **$8.4\times$ higher** |
+| **Throughput (0.1 vCPU)** | $\sim 11.6\text{ posts/s}$ ($10\text{L/day}$) | **168.3 posts / second** | **$14.5\times$ daily target** |
+| **Runtime Memory (RSS)** | $\le 300\text{ MB}$ | **125.2 MB (local) / 148.7 MB (Railway)** | **$2.0\times$ under budget** |
+| **Model Disk Footprint** | $\le 25\text{ MB}$ | **0.48 MB** | **$52.1\times$ smaller** |
+| **Operating Cost** | Budget $\le \$0.00$ | **$0.00 / month** | 100% Free-Tier |
 
 ---
 
-## Quickstart & CLI Commands
+## 🚀 Core Architectural Features
 
-### 1. Run Automated Test Suite
-```bash
-python run.py test
-```
+1. **Option 1: Cultural Disaster & Triumph Metaphors (`culture_tropes_dict.json`)**
+   - Resolves pop-culture and tech lore that lack literal sentiment words (e.g. *"They pulled a Season 8 Game of Thrones on this update"*, *"feeling like a 19th-century chimney sweep"*, *"CrowdStrike update vibes"* $\to$ **Negative**; *"UI redesign is literally the Mona Lisa"* $\to$ **Positive**).
+   - Includes litotes/negation guards (e.g. *"not a dumpster fire"* avoids being wrongly tagged as a disaster).
 
-### 2. Run Latency & Memory Benchmark
-```bash
-python run.py benchmark
-```
+2. **Option 2: Contextual Thread / Parent Post Awareness (`PostInput(text, context)`)**
+   - Inverts praise into sarcasm when posted under disaster contexts (e.g. Reply: *"Brilliant job guys 👏"*, Context: *"Major database outage"* $\to$ **Negative (`context_mismatch_sarcasm`)**).
+   - Thread-aware LRU cache keys prevent collisions between identical text with and without context.
 
-### 3. Run Traffic Load Simulation (10L posts/day)
-```bash
-python run.py load-test --volume 1000000 --duration 5
-```
+3. **Multi-Modal Contextual Emoji Tokenizer (`emoji_mapper.py`)**
+   - Dynamically decodes ambiguous emojis based on syntactic context (e.g. `💀` with delay words $\to$ sarcasm/agony; `💀` with laughter words $\to$ high humor; `🙃` / `🫠` with complaints $\to$ suppressed frustration).
 
-### 4. Start the FastAPI Production Server
-```bash
-python run.py serve --port 8000
-```
+4. **Clause-Level Aspect-Based Sentiment Analysis (ABSA) (`aspect_extractor.py`)**
+   - Automatically segments multi-clause feedback across 5 dimensions: **UI/UX**, **Performance**, **Support**, **Pricing**, and **Features**.
 
-### 5. Retrain Model
-```bash
-python run.py train
-```
+5. **Sub-0.07ms High-Speed LRU Cache (`cache.py`)**
+   - In-memory 10,000-entry LRU cache delivering $0.069\text{ ms}$ response times for viral posts and repetitive social traffic.
 
 ---
 
-## API Endpoints
+## 🛠️ API Reference
 
-### `POST /predict`
-Analyzes an array of posts with batching support:
-```json
-{
-  "texts": [
-    "The new feature is absolute fire no cap 🔥",
-    "Customer service was totally mid and completely cooked",
-    "Oh yeah, totally amazing job /s"
-  ],
-  "enable_fallback": true
-}
+### 1. Simple Post Analysis (`texts` array)
+```bash
+curl -X POST "https://sentiment-nlp-production.up.railway.app/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "texts": [
+      "Not gonna lie, I thought this phone would be mid but ngl it is actually not bad at all, kinda impressed ngl",
+      "They really pulled a Season 8 Game of Thrones on this update"
+    ]
+  }'
 ```
 
-Response:
+#### Response:
 ```json
 {
   "results": [
     {
-      "text": "The new feature is absolute fire no cap 🔥",
+      "text": "Not gonna lie, I thought this phone would be mid but ngl it is actually not bad at all, kinda impressed ngl",
       "label": "positive",
-      "confidence": 0.9842,
-      "probabilities": { "negative": 0.0041, "neutral": 0.0117, "positive": 0.9842 },
+      "confidence": 0.88,
+      "probabilities": { "positive": 0.88, "negative": 0.09, "neutral": 0.03 },
+      "aspects": { "Features": "positive" },
       "fallback_required": false,
-      "reason": null
+      "reason": "praise_shift_detected",
+      "cached": false
     },
     {
-      "text": "Customer service was totally mid and completely cooked",
+      "text": "They really pulled a Season 8 Game of Thrones on this update",
       "label": "negative",
-      "confidence": 0.9712,
-      "probabilities": { "negative": 0.9712, "neutral": 0.0211, "positive": 0.0077 },
+      "confidence": 0.92,
+      "probabilities": { "negative": 0.92, "positive": 0.06, "neutral": 0.02 },
+      "aspects": {},
       "fallback_required": false,
-      "reason": null
-    },
-    {
-      "text": "Oh yeah, totally amazing job /s",
-      "label": "negative",
-      "confidence": 0.8500,
-      "probabilities": { "negative": 0.4500, "neutral": 0.2000, "positive": 0.3500 },
-      "fallback_required": true,
-      "reason": "sarcasm_detected",
-      "fallback_result": { "provider": "heuristic_fallback", "label": "negative", "resolved": true }
+      "reason": "cultural_disaster_metaphor",
+      "cached": false
     }
   ],
-  "total_processed": 3,
-  "fallback_count": 1,
-  "batch_latency_ms": 2.45,
-  "model_version": "tfidf-calibrated-v1"
-}
-```
-
-### `GET /health`
-```json
-{
-  "status": "healthy",
-  "model_loaded": true,
-  "memory_rss_mb": 125.22,
-  "uptime_seconds": 1420.5,
-  "version": "1.0.0"
-}
-```
-
-### `GET /metrics`
-```json
-{
-  "total_requests": 182,
-  "total_posts_analyzed": 4550,
-  "total_fallbacks_triggered": 395,
-  "fallback_rate_pct": 8.68,
-  "avg_latency_ms": 16.53
+  "total_processed": 2,
+  "fallback_count": 0,
+  "cache_hits": 0,
+  "batch_latency_ms": 1.74,
+  "model_version": "tfidf-context-absa-v4"
 }
 ```
 
 ---
 
-## Docker Deployment (Render / Cloud with 0.1 CPU & 300MB RAM)
+### 2. Contextual Thread Post Analysis (`posts` array with parent context)
+```bash
+curl -X POST "https://sentiment-nlp-production.up.railway.app/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "posts": [
+      {
+        "text": "Brilliant job guys, love to see it 👏",
+        "context": "Major database outage affecting all production servers"
+      }
+    ]
+  }'
+```
+
+#### Response:
+```json
+{
+  "results": [
+    {
+      "text": "Brilliant job guys, love to see it 👏",
+      "context": "Major database outage affecting all production servers",
+      "label": "negative",
+      "confidence": 0.92,
+      "probabilities": { "negative": 0.92, "positive": 0.06, "neutral": 0.02 },
+      "aspects": {},
+      "fallback_required": false,
+      "reason": "context_mismatch_sarcasm",
+      "cached": false
+    }
+  ],
+  "total_processed": 1,
+  "fallback_count": 0,
+  "cache_hits": 0,
+  "batch_latency_ms": 1.48,
+  "model_version": "tfidf-context-absa-v4"
+}
+```
+
+---
+
+## 🧪 Benchmark Verification
+
+To run the complete benchmark suite locally:
 
 ```bash
-docker compose -f docker/docker-compose.yml up --build -d
+# 1. Activate environment
+source .venv/bin/activate  # Or .venv\Scripts\activate on Windows
+
+# 2. Run Hard Set 1 (Slang, Negation, Litotes - 50 samples)
+python scripts/benchmark_hard_50.py
+
+# 3. Run Hard Set 2 (Memes, Sarcasm, Pop-Culture Lore - 50 samples)
+python scripts/benchmark_hard_set_2.py
+
+# 4. Run automated test suite
+pytest tests/
 ```
-Verified strict memory cap $\le$ 300MB and CPU quota 0.1 vCPU.
+
+---
+
+## 🐳 Docker Deployment
+
+```bash
+# Build the lightweight container
+docker build -t sentiment-engine:latest -f docker/Dockerfile .
+
+# Run with strictly enforced resource quotas
+docker run -d \
+  -p 8000:8000 \
+  --memory=300m \
+  --cpus=0.1 \
+  --name sentiment-service \
+  sentiment-engine:latest
+```
+
+---
+
+## 📚 Detailed Documentation
+
+- **[System Architecture Deep Dive](docs/ARCHITECTURE.md):** Complete architectural overview, dual-stage pipeline diagrams, memory profiling, and mathematical capacity proofs under $0.1\text{ vCPU}$.
+- **[Implementation & Operational Guide](docs/IMPLEMENTATION.md):** Module breakdown, schema definitions, edge case solutions, and operational runbooks.

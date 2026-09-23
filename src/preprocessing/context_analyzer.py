@@ -1,17 +1,40 @@
+import os
+import json
 import re
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional, List
 
 class ContextAnalyzer:
     """
     High-precision contextual analyzer for complex linguistic edge cases:
+    - Cultural Tropes & Pop-Culture Disasters/Triumphs (Option 1) (e.g. "Season 8 Game of Thrones", "chimney sweep", "Mona Lisa")
+    - Contextual Thread & Parent Post Awareness (Option 2) (e.g. praise posted under an outage alert -> sarcasm)
     - Deadpan Sarcasm & Meme Irony (e.g. "this is fine dog", "cremation on time", "sure Jan")
-    - Mixed Emotion & Clause Contrast (e.g. "service was slow but biryani was good", "objectively terrible but fun")
+    - Mixed Emotion & Clause Contrast (e.g. "service was slow but biryani was good")
     - Temporal Shift Praise (e.g. "used to be trash but new update slaps", "hit different")
     - Understated Praise / Litotes / Double Negations (e.g. "not bad at all", "not prepared for how good")
     - Explicit Neutral & Ambiguity Anchoring (e.g. "not the best, not the worst", "made peace with mediocrity")
     """
     def __init__(self):
-        # 1. Explicit Neutral / Litotes / Non-committal
+        # 1. Load cultural tropes dictionary (Option 1)
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        tropes_path = os.path.join(project_root, "data", "dictionaries", "culture_tropes_dict.json")
+        if not os.path.exists(tropes_path):
+            tropes_path = os.path.join(os.getcwd(), "data", "dictionaries", "culture_tropes_dict.json")
+        if not os.path.exists(tropes_path):
+            tropes_path = "/app/data/dictionaries/culture_tropes_dict.json"
+
+        self.cultural_disasters: List[str] = []
+        self.cultural_triumphs: List[str] = []
+        if os.path.exists(tropes_path):
+            try:
+                with open(tropes_path, "r", encoding="utf-8") as f:
+                    tropes_data = json.load(f)
+                    self.cultural_disasters = tropes_data.get("cultural_disasters", [])
+                    self.cultural_triumphs = tropes_data.get("cultural_triumphs", [])
+            except Exception:
+                pass
+
+        # 2. Explicit Neutral / Litotes / Non-committal
         self.neutral_patterns = [
             re.compile(r"\bnot\s+the\s+best,?\s+(not\s+the\s+worst|it\s+exists)\b", re.I),
             re.compile(r"\b(i've\s+)?seen\s+better,?\s+(i've\s+)?seen\s+worse\b", re.I),
@@ -28,9 +51,8 @@ class ContextAnalyzer:
             re.compile(r"\bcontent\s+elon\s+warned\s+us\s+about\b", re.I),
         ]
 
-        # 2. Structural Sarcasm & Deadpan Meme Irony (Praise masks frustration / disaster)
+        # 3. Structural Sarcasm & Deadpan Meme Irony (Praise masks frustration / disaster)
         self.sarcasm_ironic_patterns = [
-            # Memes, metaphors & cultural idioms
             re.compile(r"this\s+is\s+fine\.\s+everything\s+is\s+fine", re.I),
             re.compile(r"\bcremation(\s+is\s+scheduled)?\b", re.I),
             re.compile(r"\btrust.*as\s+much\s+as.*(free\s+wifi|airport\s+wifi)\b", re.I),
@@ -40,7 +62,7 @@ class ContextAnalyzer:
             re.compile(r"\b(bar\s+was\s+(already\s+)?on\s+the\s+floor|added\s+a\s+shovel)\b", re.I),
             re.compile(r"\bpeaked\s+in\s+\d{4}\b", re.I),
             re.compile(r"\bsince\s+the\s+ice\s+age\b", re.I),
-            re.compile(r"\breally\s+said\s+[\"']buffering[\"']", re.I),
+            re.compile(r"\breally\s+said\s+['\"]buffering['\"]", re.I),
             re.compile(r"\bnot\s+everyone\s+was\s+blessed\s+with\b", re.I),
             re.compile(r"\b(hopes,?\s+dreams,?\s+and\s+duct\s+tape|duct\s+tape)\b", re.I),
             re.compile(r"\bexactly\s+how\s+i\s+wanted\s+my\s+\w+\s+to\s+go\b", re.I),
@@ -49,7 +71,7 @@ class ContextAnalyzer:
             re.compile(r"\baudacity\s+of\s+this\s+\w+\s+to\s+(crash|fail|freeze|break)\b", re.I),
             re.compile(r"\bthey\s+really\s+let\s+anyone\s+(ship|code|cook|release)\b", re.I),
             re.compile(r"\bthis\s+is\s+why\s+we\s+can't\s+have\s+nice\s+things\b", re.I),
-            re.compile(r"\breally\s+said\s+[\"'].*(cold\s+food|customer\s+service\s+is\s+dead|let\s+them|who\s+cares|innovation)", re.I),
+            re.compile(r"\breally\s+said\s+['\"].*(cold\s+food|customer\s+service\s+is\s+dead|let\s+them|who\s+cares|innovation)", re.I),
             re.compile(r"\bnot\s+everyone\s+can\s+be\s+this\s+talented.*clearly\s+it\s+shows\b", re.I),
             re.compile(r"\bi\s+have\s+thoughts.*none\s+of\s+them\s+nice\b", re.I),
             re.compile(r"\bi\s+guess\s+it\s+works\?.*barely\s+functions?\b", re.I),
@@ -98,24 +120,16 @@ class ContextAnalyzer:
             re.compile(r"ekdum\s+mast.*(fail|crash|bug|nahi)", re.I),
         ]
 
-        # 3. Double Negation / Temporal Shift / High-Level Praise -> Positive
+        # 4. Double Negation / Temporal Shift / High-Level Praise -> Positive
         self.praise_override_patterns = [
-            # Slang praise: hit different, certified hood classic
             re.compile(r"\bhit\s+different\b", re.I),
             re.compile(r"\bcertified\s+hood\s+classic\b", re.I),
-            # Temporal shifts: used to be trash/bad -> now slaps/good
             re.compile(r"\bused\s+to\s+be\s+(trash|garbage|bad|broken|terrible|mid)\b.*(new\s+update|now|today|finally).*(slaps|fire|good|great|clean|fixed|love)", re.I),
-            # "I'm here for it"
             re.compile(r"\band\s+i'm\s+here\s+for\s+it\b", re.I),
-            # "and I respect it so much"
             re.compile(r"\band\s+i\s+respect\s+it\b", re.I),
-            # Not prepared for how good
             re.compile(r"\b(was\s+not|wasn't)\s+prepared\s+for\s+how\s+(good|fire|great|amazing)\b", re.I),
-            # Broke me (in the best way)
             re.compile(r"\bbroke\s+me\s+\(in\s+the\s+best\s+way\)\b", re.I),
-            # Obsessed
             re.compile(r"\bi'm\s+obsessed\b", re.I),
-            # Double negations
             re.compile(r"\b(is\s+not|isn't|not)\s+bad\b", re.I),
             re.compile(r"\bcan't\s+say\s+i\s+don't\s+like\b", re.I),
             re.compile(r"\bcannot\s+say\s+i\s+do\s+not\s+like\b", re.I),
@@ -123,7 +137,7 @@ class ContextAnalyzer:
             re.compile(r"\bnothing\s+game-?breaking\b", re.I),
         ]
 
-        # 4. Mixed / Contrastive Clauses
+        # 5. Mixed / Contrastive Clauses
         self.contrastive_conjunctions = re.compile(
             r"\b(but|however|although|though|yet|while|unlike|on\s+the\s+other\s+hand|still\s+can't|still\s+cant)\b",
             re.I
@@ -132,12 +146,14 @@ class ContextAnalyzer:
         self.positive_keywords = {
             "good", "great", "slaps", "fire", "clean", "smooth", "love", "loved", "iconic",
             "helpful", "fixed", "worth", "worth it", "best", "super", "immaculate", "impressed",
-            "comedy", "popcorn went hard", "went hard", "ate and left no crumbs"
+            "comedy", "popcorn went hard", "went hard", "ate and left no crumbs", "brilliant",
+            "genius", "wonderful", "congrats", "chef's kiss", "10/10", "fantastic"
         }
         self.negative_keywords = {
             "slow", "painfully slow", "forgot", "broken", "mid", "trash", "letdown", "price",
             "expensive", "crash", "crashes", "broke", "waiting", "unfortunately", "worst",
-            "not recommend", "full price", "bad"
+            "not recommend", "full price", "bad", "outage", "down", "offline", "incident",
+            "bug", "failed", "failing", "error", "delay", "delayed"
         }
 
     def _check_contrastive_mixed(self, text: str) -> bool:
@@ -168,7 +184,6 @@ class ContextAnalyzer:
         ]):
             return True
 
-        # Check adverbial 'though' or split on contrastive conjunction
         has_pos_global = any(w in text_lower for w in self.positive_keywords)
         has_neg_global = any(w in text_lower for w in self.negative_keywords)
 
@@ -178,7 +193,6 @@ class ContextAnalyzer:
         if not self.contrastive_conjunctions.search(text_lower):
             return False
 
-        # Split on contrastive conjunction
         parts = self.contrastive_conjunctions.split(text_lower)
         if len(parts) >= 2:
             left = parts[0]
@@ -194,27 +208,78 @@ class ContextAnalyzer:
 
         return False
 
-    def analyze(self, raw_text: str, base_label: str, base_confidence: float) -> Tuple[str, float, bool, str]:
+    def analyze(self, raw_text: str, base_label: str, base_confidence: float, context: Optional[str] = None) -> Tuple[str, float, bool, str]:
         raw_lower = raw_text.lower()
 
-        # 1. Explicit Neutral / Litotes / Non-committal
+        # 0. Contextual Parent / Thread Mismatch Check (Option 2)
+        if context and isinstance(context, str) and context.strip():
+            context_lower = context.lower()
+            context_is_negative = any(w in context_lower for w in [
+                "outage", "down", "offline", "crashed", "crashing", "failed", "failing",
+                "failure", "broken", "delay", "delayed", "incident", "emergency", "fire",
+                "hack", "breach", "bug", "vulnerability", "loss", "lost", "refund", "error",
+                "layoff", "cancelled", "canceled", "leak", "stole", "stolen"
+            ])
+            
+            if context_is_negative:
+                # Praise in reply to a disaster context is almost certainly sarcasm
+                has_praise = any(w in raw_lower for w in [
+                    "brilliant", "great job", "amazing", "love to see it", "genius",
+                    "wonderful", "helpful", "huge w", "congrats", "congratulations",
+                    "chef's kiss", "10/10", "fantastic", "best update", "clean",
+                    "incredible", "phenomenal", "outstanding", "proud", "well done", "stellar"
+                ])
+                if has_praise:
+                    return "negative", 0.92, False, "context_mismatch_sarcasm"
+                
+                # If reply is also negative, reinforce negative
+                if base_label.lower() == "negative":
+                    return "negative", max(base_confidence, 0.92), False, "context_reinforced_negative"
+
+            context_is_positive = any(w in context_lower for w in [
+                "promoted", "funding", "launched", "launch", "award", "record revenue",
+                "anniversary", "celebrating", "milestone", "resolved", "fixed", "shipped"
+            ])
+            if context_is_positive:
+                has_cynicism = any(w in raw_lower for w in [
+                    "rip", "huge l", "trash", "cringe", "who asked", "nobody cares", "mid"
+                ])
+                if has_cynicism:
+                    return "negative", 0.90, False, "context_cynicism_detected"
+
+        # 1. Cultural Tropes & Lore (Option 1)
+        # Check cultural disasters
+        for trope in self.cultural_disasters:
+            if trope in raw_lower:
+                neg_prefix = [f"not {trope}", f"not a {trope}", f"wasn't {trope}", f"isn't {trope}", f"neither {trope}"]
+                if not any(np in raw_lower for np in neg_prefix):
+                    return "negative", 0.92, False, "cultural_disaster_metaphor"
+
+        # Check cultural triumphs
+        for trope in self.cultural_triumphs:
+            if trope in raw_lower:
+                neg_prefix = [f"not {trope}", f"not a {trope}", f"wasn't {trope}", f"isn't {trope}"]
+                if not any(np in raw_lower for np in neg_prefix):
+                    return "positive", 0.92, False, "cultural_triumph_metaphor"
+
+        # 2. Explicit Neutral / Litotes / Non-committal
         for pat in self.neutral_patterns:
             if pat.search(raw_lower):
                 return "neutral", 0.85, False, "explicit_neutral_detected"
 
-        # 2. Sarcastic Irony & Deadpan Memes -> Negative
+        # 3. Sarcastic Irony & Deadpan Memes -> Negative
         for pat in self.sarcasm_ironic_patterns:
             if pat.search(raw_lower):
                 return "negative", 0.92, False, "sarcastic_irony_detected"
 
-        # 3. High-Level Praise / Temporal Shifts / Double Negations -> Positive
+        # 4. High-Level Praise / Temporal Shifts / Double Negations -> Positive
         for pat in self.praise_override_patterns:
             if pat.search(raw_lower):
                 return "positive", 0.88, False, "praise_shift_detected"
 
-        # 4. Contrastive Clauses -> Mixed
+        # 5. Contrastive Clauses -> Mixed
         if self._check_contrastive_mixed(raw_text):
             return "mixed", 0.90, False, "contrastive_clause_mixed"
 
-        # 5. Standard model prediction
+        # 6. Standard model prediction
         return base_label.lower(), base_confidence, (base_confidence < 0.60), "model_inference"
