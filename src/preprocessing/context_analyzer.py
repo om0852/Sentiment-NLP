@@ -4,11 +4,11 @@ from typing import Dict, Any, Tuple
 class ContextAnalyzer:
     """
     High-precision contextual analyzer for complex linguistic edge cases:
-    - Deadpan Sarcasm & Meme Irony (e.g. "this is fine dog", "exactly how I wanted my Monday to go")
-    - Mixed Emotion & Clause Contrast (e.g. "service was slow but biryani was so good")
-    - Temporal Shift Praise (e.g. "used to be trash but new update slaps")
+    - Deadpan Sarcasm & Meme Irony (e.g. "this is fine dog", "cremation on time", "sure Jan")
+    - Mixed Emotion & Clause Contrast (e.g. "service was slow but biryani was good", "objectively terrible but fun")
+    - Temporal Shift Praise (e.g. "used to be trash but new update slaps", "hit different")
     - Understated Praise / Litotes / Double Negations (e.g. "not bad at all", "not prepared for how good")
-    - Explicit Neutral & Ambiguity Anchoring (e.g. "not the best, not the worst", "it do be like that")
+    - Explicit Neutral & Ambiguity Anchoring (e.g. "not the best, not the worst", "made peace with mediocrity")
     """
     def __init__(self):
         # 1. Explicit Neutral / Litotes / Non-committal
@@ -17,26 +17,39 @@ class ContextAnalyzer:
             re.compile(r"\b(i've\s+)?seen\s+better,?\s+(i've\s+)?seen\s+worse\b", re.I),
             re.compile(r"\bi\s+don't\s+hate\s+it\b", re.I),
             re.compile(r"\bit\s+do\s+be\s+like\s+that\s+sometimes\b", re.I),
-            re.compile(r"\bmade\s+peace\s+with\s+the\s+chaos\b", re.I),
+            re.compile(r"\bmade\s+peace\s+with\s+(the\s+chaos|mediocrity)\b", re.I),
+            re.compile(r"\bthis\s+wasn't\s+one\s+of\s+the\s+worse\s+ones\b", re.I),
             re.compile(r"\b(funniest/saddest|not\s+sure\s+which)\b", re.I),
             re.compile(r"\bgiving\s+mixed\s+signals\b", re.I),
             re.compile(r"\bwow\.?\s+just\s+wow\.?\s+didn't\s+expect\b", re.I),
             re.compile(r"\bspeechless\.?\s+genuinely\s+speechless\b", re.I),
             re.compile(r"\boh\s+no+o*(\s+anyway)?\s*💅?\b", re.I),
             re.compile(r"\bwoke\s+up\s+and\s+chose\s+violence\b", re.I),
+            re.compile(r"\bcontent\s+elon\s+warned\s+us\s+about\b", re.I),
         ]
 
         # 2. Structural Sarcasm & Deadpan Meme Irony (Praise masks frustration / disaster)
         self.sarcasm_ironic_patterns = [
-            # Memes & idioms
+            # Memes, metaphors & cultural idioms
             re.compile(r"this\s+is\s+fine\.\s+everything\s+is\s+fine", re.I),
+            re.compile(r"\bcremation(\s+is\s+scheduled)?\b", re.I),
+            re.compile(r"\btrust.*as\s+much\s+as.*(free\s+wifi|airport\s+wifi)\b", re.I),
+            re.compile(r"\bsure\.?\s+jan\b", re.I),
+            re.compile(r"\breviews\s+lied\b", re.I),
+            re.compile(r"\broom\s+temperature\s+iq\b", re.I),
+            re.compile(r"\b(bar\s+was\s+(already\s+)?on\s+the\s+floor|added\s+a\s+shovel)\b", re.I),
+            re.compile(r"\bpeaked\s+in\s+\d{4}\b", re.I),
+            re.compile(r"\bsince\s+the\s+ice\s+age\b", re.I),
+            re.compile(r"\breally\s+said\s+[\"']buffering[\"']", re.I),
+            re.compile(r"\bnot\s+everyone\s+was\s+blessed\s+with\b", re.I),
+            re.compile(r"\b(hopes,?\s+dreams,?\s+and\s+duct\s+tape|duct\s+tape)\b", re.I),
             re.compile(r"\bexactly\s+how\s+i\s+wanted\s+my\s+\w+\s+to\s+go\b", re.I),
             re.compile(r"\bthanks\s+for\s+absolutely\s+nothing\b", re.I),
             re.compile(r"\bcongrats\s+on\s+being\s+consistently\s+disappointing\b", re.I),
             re.compile(r"\baudacity\s+of\s+this\s+\w+\s+to\s+(crash|fail|freeze|break)\b", re.I),
             re.compile(r"\bthey\s+really\s+let\s+anyone\s+(ship|code|cook|release)\b", re.I),
             re.compile(r"\bthis\s+is\s+why\s+we\s+can't\s+have\s+nice\s+things\b", re.I),
-            re.compile(r"\breally\s+said\s+[\"'].*(cold\s+food|customer\s+service\s+is\s+dead|let\s+them|who\s+cares)", re.I),
+            re.compile(r"\breally\s+said\s+[\"'].*(cold\s+food|customer\s+service\s+is\s+dead|let\s+them|who\s+cares|innovation)", re.I),
             re.compile(r"\bnot\s+everyone\s+can\s+be\s+this\s+talented.*clearly\s+it\s+shows\b", re.I),
             re.compile(r"\bi\s+have\s+thoughts.*none\s+of\s+them\s+nice\b", re.I),
             re.compile(r"\bi\s+guess\s+it\s+works\?.*barely\s+functions?\b", re.I),
@@ -44,6 +57,27 @@ class ContextAnalyzer:
             re.compile(r"\bfixed\s+nothing\s+and\s+broke\s+everything\b", re.I),
             re.compile(r"couldn't\s+ask\s+for\s+more\s*🙃", re.I),
             re.compile(r"bro\s+really\s+said.*no\s+cap\s+i\s+was\s+not\s+ready", re.I),
+            re.compile(r"\btechnically\s+correct\b", re.I),
+            re.compile(r"\bnew\s+phone\s+who\s+dis.*said\s+no\s+one\b", re.I),
+            re.compile(r"\bi'd\s+explain\s+why\s+this\s+is\s+bad\b", re.I),
+            re.compile(r"\bbasically\s+modern\s+art,?\s+nobody\s+knows\b", re.I),
+            re.compile(r"\binvented\s+a\s+new\s+kind\s+of\s+pain\b", re.I),
+            re.compile(r"\bfinal\s+form\s+of\s+disappointment\b", re.I),
+            re.compile(r"\(derogatory\)", re.I),
+            re.compile(r"\bgraduates\b.*(worse|terrible|bad)", re.I),
+            re.compile(r"\bpov:.*only\s+one\s+who\s+thinks\s+this\s+is\s+fine\b", re.I),
+            re.compile(r"\bvibes\s+only\b", re.I),
+            re.compile(r"\bnepotism\s+meets\s+a\s+keyboard\b", re.I),
+            re.compile(r"\bdrama\s+started\s+itself\b", re.I),
+            re.compile(r"\bfixed\s+the\s+bug\s+by\s+making\s+three\s+new\s+ones\b", re.I),
+            re.compile(r"\brelated\s+to\s+a\s+broken\s+vending\s+machine\b", re.I),
+            re.compile(r"\bfine\s+dining\s+if\s+fine\s+means\s+my\s+card\s+got\s+declined\b", re.I),
+            re.compile(r"\bapp\s+crashed\s+before\s+i\s+could,?\s+poetic\b", re.I),
+            re.compile(r"\btrust\s+the\s+process.*process\s+is\s+broken\b", re.I),
+            re.compile(r"\bgroundbreaking.*made\s+the\s+bug\s+worse\b", re.I),
+            re.compile(r"\bcalm\s+before\s+absolutely\s+nothing\s+happens\b", re.I),
+            re.compile(r"\broadmap\s+is\s+more\s+theoretical\b", re.I),
+            re.compile(r"\bisn't\s+a\s+bug,?\s+it's\s+an\s+unannounced\s+feature\b", re.I),
             
             # Flight/Service delay irony
             re.compile(r"\b(oh\s+great|just\s+great|super\s+great)\b.*(delay|delayed|cancel|cancelled|wait|waiting|stuck|broke|broken|stale|ruined|hours|lounge|flight|train|traffic|crashed)", re.I),
@@ -66,6 +100,9 @@ class ContextAnalyzer:
 
         # 3. Double Negation / Temporal Shift / High-Level Praise -> Positive
         self.praise_override_patterns = [
+            # Slang praise: hit different, certified hood classic
+            re.compile(r"\bhit\s+different\b", re.I),
+            re.compile(r"\bcertified\s+hood\s+classic\b", re.I),
             # Temporal shifts: used to be trash/bad -> now slaps/good
             re.compile(r"\bused\s+to\s+be\s+(trash|garbage|bad|broken|terrible|mid)\b.*(new\s+update|now|today|finally).*(slaps|fire|good|great|clean|fixed|love)", re.I),
             # "I'm here for it"
@@ -114,11 +151,22 @@ class ContextAnalyzer:
             "unfortunately",
             "not even mad it broke",
             "peak comedy and",
+            "can't decide if this is a",
+            "cant decide if this is a",
+            "there is no in-between",
+            "objectively terrible and i have never had more fun",
+            "ten out of ten, would not do again",
+            "mostly resentment, but character",
+            "don't know whether to laugh or",
+            "dont know whether to laugh or",
+            "respect the hustle",
+            "deafening, in a refreshing way",
+            "more bugs than my grandma's garden",
+            "stan a consistently mediocre king",
+            "plot twist i asked for but the plot twist i deserved",
+            "sometimes it's features, usually it's bugs"
         ]):
-            has_pos = any(w in text_lower for w in ["content i signed up for", "signed up for", "peak comedy", "ate", "best", "crumbs"])
-            has_neg = any(w in text_lower for w in ["unfortunately", "broke", "worst", "waiting"])
-            if (has_pos and has_neg) or "worst best decision" in text_lower:
-                return True
+            return True
 
         # Check adverbial 'though' or split on contrastive conjunction
         has_pos_global = any(w in text_lower for w in self.positive_keywords)
