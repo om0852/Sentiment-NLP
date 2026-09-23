@@ -95,3 +95,14 @@ class TfidfSentimentClassifier(BaseSentimentClassifier):
         self.max_features = data.get("max_features", 15000)
         self.confidence_threshold = data.get("confidence_threshold", 0.60)
         self.is_trained = data.get("is_trained", True)
+        return self
+
+    @classmethod
+    def load_model(cls, path: str):
+        """Classmethod loader."""
+        instance = cls()
+        instance.load(path)
+        return instance
+
+# Aliases for seamless compatibility
+TFIDFClassifier = TfidfSentimentClassifier

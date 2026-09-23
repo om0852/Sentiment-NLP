@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
-from src.models.tfidf_classifier import TFIDFClassifier
+from src.models.tfidf_classifier import TfidfSentimentClassifier, TFIDFClassifier
 from src.preprocessing.pipeline import PreprocessingPipeline
 from src.preprocessing.context_analyzer import ContextAnalyzer
 from src.preprocessing.aspect_extractor import AspectExtractor
@@ -38,7 +38,7 @@ METRICS = {
     "total_latency_ms": 0.0,
 }
 
-model: Optional[TFIDFClassifier] = None
+model: Optional[TfidfSentimentClassifier] = None
 pipeline: Optional[PreprocessingPipeline] = None
 context_analyzer: Optional[ContextAnalyzer] = None
 aspect_extractor: Optional[AspectExtractor] = None
@@ -67,7 +67,8 @@ async def lifespan(app: FastAPI):
     
     # Load model
     if os.path.exists(model_path):
-        model = TFIDFClassifier.load(model_path)
+        model = TfidfSentimentClassifier()
+        model.load(model_path)
         print(f"Sentiment model successfully loaded from {model_path}")
     else:
         print(f"WARNING: Model not found at {model_path}. Predictions will fail until trained.")
