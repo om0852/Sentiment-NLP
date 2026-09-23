@@ -3,8 +3,8 @@ import httpx
 from typing import Dict, Any, Optional
 
 class FallbackService:
-    def __init__(self, api_url: str = None, api_key: str = None):
-        self.api_url = api_url or os.getenv("JEV_API_URL", "https://api.jev.ai/v1/sentiment")
+    def __init__(self, api_url: Optional[str] = None, endpoint_url: Optional[str] = None, api_key: Optional[str] = None, **kwargs):
+        self.api_url = api_url or endpoint_url or os.getenv("FALLBACK_API_URL") or os.getenv("JEV_API_URL") or "https://api.jev.ai/v1/sentiment"
         self.api_key = api_key or os.getenv("JEV_API_KEY", "mock-jev-key")
         self.timeout = 3.0
 

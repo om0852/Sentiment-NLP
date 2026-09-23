@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
     active_learning_path = os.path.join(project_root, "data", "feedback_queue.jsonl")
     active_learning = ActiveLearningQueue(log_path=active_learning_path)
     
-    fallback_service = FallbackService(endpoint_url=os.getenv("FALLBACK_API_URL", "https://api.jev.ai/v1/sentiment"))
+    fallback_service = FallbackService(api_url=os.getenv("FALLBACK_API_URL", "https://api.jev.ai/v1/sentiment"))
     
     # Load model
     if os.path.exists(model_path):
