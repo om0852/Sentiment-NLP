@@ -207,9 +207,12 @@ async def predict_sentiment(req: SentimentPredictRequest):
             pred = preds[idx]
             meta = metas[idx]
             
-            # Apply contextual reasoning (Culture Tropes + Contextual Parent Post Mismatch)
+            # Aspect-based sentiment analysis (available for context synthesis)
+            aspects = aspect_extractor.extract_aspects(raw_t) if aspect_extractor else {}
+            
+            # Apply contextual reasoning (Culture Tropes + Contextual Parent Post Mismatch + ABSA + Emoji Dissonance)
             final_label, conf, ctx_fallback, reason = context_analyzer.analyze(
-                raw_t, pred["label"], pred["confidence"], context=ctx
+                raw_t, pred["label"], pred["confidence"], context=ctx, aspects=aspects
             )
             
             needs_fallback = ctx_fallback or (conf < req.confidence_threshold) or meta.get("sarcasm_detected", False)
@@ -240,11 +243,8 @@ async def predict_sentiment(req: SentimentPredictRequest):
                                 reason="fallback_resolved",
                                 resolved_label=final_label
                             )
-                            
-            # Aspect-based sentiment analysis
-            aspects = {}
-            if req.extract_aspects and aspect_extractor:
-                aspects = aspect_extractor.extract_aspects(raw_t)
+            
+            returned_aspects = aspects if req.extract_aspects else {}
                 
             # Calibrate probabilities if context analysis altered the prediction
             if final_label.lower() != pred["label"].lower():
@@ -283,7 +283,7 @@ async def predict_sentiment(req: SentimentPredictRequest):
                 label=final_label,
                 confidence=round(conf, 4),
                 probabilities=calibrated_probs,
-                aspects=aspects,
+                aspects=returned_aspects,
                 fallback_required=needs_fallback,
                 reason=reason,
                 cached=False,
