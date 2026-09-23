@@ -18,7 +18,7 @@ from src.preprocessing.pipeline import PreprocessingPipeline
 from src.preprocessing.context_analyzer import ContextAnalyzer
 from src.preprocessing.aspect_extractor import AspectExtractor
 from src.serving.cache import SentimentLRUCache
-from src.serving.active_learning import ActiveLearningBuffer
+from src.serving.active_learning import ActiveLearningQueue, ActiveLearningBuffer
 from src.serving.fallback import FallbackService
 from src.serving.schemas import (
     SentimentPredictRequest,
@@ -43,7 +43,7 @@ pipeline: Optional[PreprocessingPipeline] = None
 context_analyzer: Optional[ContextAnalyzer] = None
 aspect_extractor: Optional[AspectExtractor] = None
 cache: Optional[SentimentLRUCache] = None
-active_learning: Optional[ActiveLearningBuffer] = None
+active_learning: Optional[ActiveLearningQueue] = None
 fallback_service: Optional[FallbackService] = None
 
 @asynccontextmanager
@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
     cache = SentimentLRUCache(max_size=10000)
     
     active_learning_path = os.path.join(project_root, "data", "feedback_queue.jsonl")
-    active_learning = ActiveLearningBuffer(log_path=active_learning_path)
+    active_learning = ActiveLearningQueue(log_path=active_learning_path)
     
     fallback_service = FallbackService(endpoint_url=os.getenv("FALLBACK_API_URL", "https://api.jev.ai/v1/sentiment"))
     
