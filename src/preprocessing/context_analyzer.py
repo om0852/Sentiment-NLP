@@ -53,6 +53,8 @@ class ContextAnalyzer:
 
         # 3. Structural Sarcasm & Deadpan Meme Irony (Praise masks frustration / disaster)
         self.sarcasm_ironic_patterns = [
+            # Bait-and-switch punchline reversals & lie inversions
+            re.compile(r"(?<!not\s)(?<!not\sa\s)\b(what\s+(they|i|we)?\s*say\s+is\s+a\s+lie|what\s+say\s+is\s+a\s+lie|what\s+they\s+say\s+is\s+cap|that\s+was\s+a\s+lie|turns\s+out\s+that\s+was\s+a\s+lie|turns\s+out\s+it\s+was\s+a\s+lie|is\s+a\s+lie|was\s+a\s+lie|said\s+no\s+one\s+ever|said\s+no\s+user\s+ever|in\s+my\s+dreams|psych\b|sike\b)\b", re.I),
             re.compile(r"this\s+is\s+fine\.\s+everything\s+is\s+fine", re.I),
             re.compile(r"\bcremation(\s+is\s+scheduled)?\b", re.I),
             re.compile(r"\btrust.*as\s+much\s+as.*(free\s+wifi|airport\s+wifi)\b", re.I),

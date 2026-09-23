@@ -102,4 +102,11 @@ class AspectExtractor:
                 else:
                     aspect_results[aspect] = "neutral"
 
+        # Invert positive aspects if a sarcastic punchline reversal / lie is present
+        lie_inversion = bool(re.search(r'(?<!not\s)(?<!not\sa\s)\b(what\s+(they|i|we)?\s*say\s+is\s+a\s+lie|what\s+say\s+is\s+a\s+lie|what\s+they\s+say\s+is\s+cap|that\s+was\s+a\s+lie|is\s+a\s+lie|was\s+a\s+lie|said\s+no\s+one\s+ever|in\s+my\s+dreams|psych\b|sike\b)\b', text_lower))
+        if lie_inversion:
+            for aspect, val in aspect_results.items():
+                if val == "positive":
+                    aspect_results[aspect] = "negative"
+
         return aspect_results
