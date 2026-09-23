@@ -23,9 +23,13 @@ class TextCleaner:
             re.compile(r"\bgenius move\b", re.IGNORECASE),
             re.compile(r"\bbig surprise\b", re.IGNORECASE),
         ]
+        self.sarcasm_keywords = {"/s", "yeah right", "totally normal", "as if", "genius move", "big surprise"}
 
     def detect_sarcasm_marker(self, text: str) -> bool:
         """Returns True if explicit sarcasm markers are present."""
+        text_lower = text.lower()
+        if not any(sk in text_lower for sk in self.sarcasm_keywords):
+            return False
         for pattern in self.sarcasm_markers:
             if pattern.search(text):
                 return True
@@ -39,20 +43,23 @@ class TextCleaner:
         if not text or not isinstance(text, str):
             return "", False
 
-        # Unescape HTML entities (&amp;, &lt;, etc.)
-        cleaned = html.unescape(text)
+        # Fast unescape only if '&' is present
+        cleaned = html.unescape(text) if "&" in text else text
 
         # Check for sarcasm indicators before stripping
         has_sarcasm = self.detect_sarcasm_marker(cleaned)
 
-        # Remove HTML tags
-        cleaned = self.html_tag_pattern.sub(" ", cleaned)
+        # Remove HTML tags if present
+        if "<" in cleaned:
+            cleaned = self.html_tag_pattern.sub(" ", cleaned)
 
-        # Remove URLs
-        cleaned = self.url_pattern.sub(" ", cleaned)
+        # Remove URLs if present
+        if "http" in cleaned or "www." in cleaned:
+            cleaned = self.url_pattern.sub(" ", cleaned)
 
-        # Normalize Twitter/IG mentions to a generic token or strip
-        cleaned = self.mention_pattern.sub(" ", cleaned)
+        # Normalize Twitter/IG mentions if present
+        if "@" in cleaned:
+            cleaned = self.mention_pattern.sub(" ", cleaned)
 
         # Collapse elongated characters (e.g. 'soooo' -> 'soo', 'loooove' -> 'loove')
         cleaned = self.repeated_char_pattern.sub(r"\1\1", cleaned)

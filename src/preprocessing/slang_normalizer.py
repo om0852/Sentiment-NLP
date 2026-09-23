@@ -15,23 +15,28 @@ class SlangNormalizer:
             self.slang_dict: Dict[str, Dict[str, Any]] = json.load(f)
 
         # Sort slang items: multi-word phrases first (longest to shortest)
-        self.multi_word_slang = []
-        self.single_word_slang = []
+        multi_word = []
+        single_word = []
 
         for term, data in self.slang_dict.items():
             if " " in term:
-                self.multi_word_slang.append((term, data))
+                multi_word.append((term, data))
             else:
-                self.single_word_slang.append((term, data))
+                single_word.append((term, data))
 
-        self.multi_word_slang.sort(key=lambda x: len(x[0]), reverse=True)
+        multi_word.sort(key=lambda x: len(x[0]), reverse=True)
 
-        # Precompile regex patterns for single word slang
-        self.single_patterns = []
-        for term, data in self.single_word_slang:
-            # Word boundary pattern that also rejects trailing hyphen (e.g., 'mid-michigan')
-            pattern = re.compile(rf"\b{re.escape(term)}\b(?!-)", re.IGNORECASE)
-            self.single_patterns.append((term, data, pattern))
+        # Precompile patterns once in __init__
+        self.multi_word_patterns = [
+            (term, data, re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE))
+            for term, data in multi_word
+        ]
+
+        self.single_patterns = [
+            (term, data, re.compile(rf"\b{re.escape(term)}\b(?!-)", re.IGNORECASE))
+            for term, data in single_word
+        ]
+        self.single_word_set = {term.lower() for term, _ in single_word}
 
     def normalize(self, text: str, replace_with_meaning: bool = True) -> Tuple[str, float]:
         """
@@ -42,23 +47,28 @@ class SlangNormalizer:
             return "", 0.0
 
         result = text
+        text_lower = text.lower()
         total_polarity = 0.0
 
-        # 1. Multi-word phrases first
-        for phrase, data in self.multi_word_slang:
-            pattern = re.compile(rf"\b{re.escape(phrase)}\b", re.IGNORECASE)
-            matches = len(pattern.findall(result))
-            if matches > 0:
-                total_polarity += data.get("weight", 0.0) * matches
-                replacement = f" {data['replacement']} " if replace_with_meaning else f" _{phrase.replace(' ', '_')}_ "
-                result = pattern.sub(replacement, result)
+        # 1. Multi-word phrases first (skip regex if phrase not in text_lower)
+        for phrase, data, pattern in self.multi_word_patterns:
+            if phrase in text_lower:
+                matches = len(pattern.findall(result))
+                if matches > 0:
+                    total_polarity += data.get("weight", 0.0) * matches
+                    replacement = f" {data['replacement']} " if replace_with_meaning else f" _{phrase.replace(' ', '_')}_ "
+                    result = pattern.sub(replacement, result)
 
-        # 2. Single word slang with boundary
-        for term, data, pattern in self.single_patterns:
-            matches = len(pattern.findall(result))
-            if matches > 0:
-                total_polarity += data.get("weight", 0.0) * matches
-                replacement = f" {data['replacement']} " if replace_with_meaning else f" _{term}_ "
-                result = pattern.sub(replacement, result)
+        # 2. Single word slang with boundary (fast token set intersection filter)
+        tokens = set(re.findall(r"\b\w+\b", text_lower))
+        active_slang = tokens & self.single_word_set
+        if active_slang:
+            for term, data, pattern in self.single_patterns:
+                if term.lower() in active_slang:
+                    matches = len(pattern.findall(result))
+                    if matches > 0:
+                        total_polarity += data.get("weight", 0.0) * matches
+                        replacement = f" {data['replacement']} " if replace_with_meaning else f" _{term}_ "
+                        result = pattern.sub(replacement, result)
 
         return result, total_polarity

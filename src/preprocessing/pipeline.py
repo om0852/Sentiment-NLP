@@ -17,6 +17,9 @@ class PreprocessingPipeline:
 
     def split_hashtags(self, text: str) -> str:
         """Splits hashtags into separate words while preserving semantic meaning."""
+        if "#" not in text:
+            return text
+
         def _split_tag(match):
             tag = match.group(1)
             # split PascalCase / camelCase
@@ -43,10 +46,10 @@ class PreprocessingPipeline:
         # 1. Clean & detect sarcasm
         cleaned, has_sarcasm = self.cleaner.clean(text)
 
-        # 2. Split hashtags
+        # 2. Split hashtags (fast check)
         hashtag_expanded = self.split_hashtags(cleaned)
 
-        # 3. Emoji mapping
+        # 3. Emoji mapping (fast ascii check)
         emoji_polarity = self.emoji_mapper.get_emoji_polarity(hashtag_expanded)
         emoji_processed = self.emoji_mapper.map_emojis(hashtag_expanded, mode="meaning")
 

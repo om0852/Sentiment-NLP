@@ -1,0 +1,366 @@
+{
+  "timestamp": "2026-09-23T21:50:02.850158",
+  "total_evaluated": 300000,
+  "elapsed_seconds": 325.02,
+  "throughput_posts_per_sec": 923.0,
+  "avg_latency_ms_per_post": 1.0834,
+  "sentiment_distribution": {
+    "neutral": 127141,
+    "positive": 75081,
+    "negative": 95809,
+    "mixed": 1969
+  },
+  "legacy_db_distribution": {
+    "positive": 121476,
+    "neutral": 131442,
+    "negative": 47006,
+    "unlabeled": 76
+  },
+  "alignment_with_db": {
+    "exact_alignment_count": 158692,
+    "refined_count": 141232,
+    "alignment_pct": 52.91
+  },
+  "aspect_breakdown": {
+    "ui_ux": {
+      "neutral": 14933,
+      "positive": 1965,
+      "negative": 129
+    },
+    "performance": {
+      "neutral": 2901,
+      "negative": 3223,
+      "positive": 2648
+    },
+    "customer_support": {
+      "neutral": 13008,
+      "negative": 131,
+      "positive": 471
+    },
+    "pricing_value": {
+      "neutral": 7501,
+      "negative": 904,
+      "positive": 1876
+    },
+    "features": {
+      "neutral": 9672,
+      "positive": 340,
+      "negative": 141
+    }
+  },
+  "decision_reasons": {
+    "model_inference": 294751,
+    "contrastive_clause_mixed": 1969,
+    "cultural_disaster_metaphor": 3012,
+    "cultural_triumph_metaphor": 202,
+    "sarcastic_irony_detected": 48,
+    "slang_inversion_praise": 17,
+    "emoji_dissonance_sarcasm": 1
+  },
+  "samples_refined_from_db": [
+    {
+      "id": "683f14fe369ec1a34f4980cf",
+      "source": "x",
+      "text": "MPLT20Tournament on X: &quot;Rewind the roars. Relive the wreckage of Jets win last season .... ... [Maharashtra Premier League, MPL 2025, Cricket] #T",
+      "db_sentiment": "POSITIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.601,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f14fe369ec1a34f4980d2",
+      "source": "rss",
+      "text": "Cricket Betting Odds by SuperSports - SuperSportBet. Cricket/Maharashtra Premier League. Maharashtra Premier League. Upcoming. Cricket. Match Winner. ",
+      "db_sentiment": "POSITIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.767,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f14ff369ec1a34f4980ef",
+      "source": "linkedin",
+      "text": "#advertising #marketing #asci #<b>mpl</b> #opiniontrading #adregulations | Social Samosa - LinkedIn. Galactus Funware Technology, owner of MPL, has is",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.442,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f14ff369ec1a34f4980f8",
+      "source": "facebook",
+      "text": "Galactus Funware Technology, owner of <b>MPL</b>, has issued a legal notice to ASCI, demanding .... https://www.socialsamosa.com/industry- updates/asc",
+      "db_sentiment": "NEUTRAL",
+      "model_sentiment": "NEGATIVE",
+      "confidence": 0.517,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c01369ec1a34f4981a5",
+      "source": "rss",
+      "text": "McDonald&#39;s Snack Wrap is Returning and We Know What Flavors Will Be Available - K99. McDonald's press photo/Canva/Rob Carroll photo. Winter Fries.",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.568,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c01369ec1a34f4981c1",
+      "source": "rss",
+      "text": "WATCH: Young Moose Seen Running Through Streets of Auburn, Maine - 94.9 HOM. Canva. From Away. Meaning: Anyone visiting Maine and not from Maine is \"f",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "POSITIVE",
+      "confidence": 0.361,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c03369ec1a34f4981d8",
+      "source": "rss",
+      "text": "Solo or together? The big question for Maharashtra alliances this BMC poll season. Sena UBT and MNS might decide to go together citing the Marathi man",
+      "db_sentiment": "POSITIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.784,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c03369ec1a34f4981db",
+      "source": "rss",
+      "text": "As 16 Parties Demand Special Parliament Session On Op Sindoor, Gaps In INDIA Bloc Show Up. Congress played down the absence of AAP and NCP-SP at the j",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.432,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c03369ec1a34f4981ed",
+      "source": "youtube",
+      "text": "State Minister Angry | राज्यमंत्री कॅबिनेट मंत्र्यांवर नाराज; पात्राद्वारे मुख्यमंत्र्यांकडे तक्रार. State Minister Angry | राज्यमंत्री कॅबिनेट मंत्र्",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.879,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c03369ec1a34f4981f3",
+      "source": "rss",
+      "text": "16 Opposition Parties Demand Special Parliament Session in Joint Letter to Prime Minister. The Wire has learnt that the letter refers to “serious ques",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.588,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c03369ec1a34f4981ff",
+      "source": "rss",
+      "text": "Pune: Maharashtra Deputy CM Ajit Pawar&#39;s &#39;NCP&#39; Prepares for Grand Foundation Day .... Pune, 3rd June 2025: Maharashtra Deputy Chief Minist",
+      "db_sentiment": "POSITIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.719,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c05369ec1a34f498210",
+      "source": "rss",
+      "text": "&quot;We cannot tolerate any attacks on civilians&quot;: Egyptian Foreign Minister after meeting multi .... Cairo [Egypt], June 3 (ANI): All-party del",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.889,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c05369ec1a34f498213",
+      "source": "rss",
+      "text": "All-women delegation meets Governor; Opp demands ouster of women&#39;s commission chief. The opposition delegation comprised leaders of all three part",
+      "db_sentiment": "NEGATIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.561,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c05369ec1a34f49821f",
+      "source": "rss",
+      "text": "Egyptian Foreign Minister reiterates solidarity with India in fight against terrorism. Cairo, June 3 (SocialNews.XYZ) The high-level multi-party deleg",
+      "db_sentiment": "POSITIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.843,
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f1c05369ec1a34f498222",
+      "source": "youtube",
+      "text": "India Reaffirms Solidarity Against Terrorism in Meeting with Arab League Secretary-General. An all-party Indian delegation, led by NCP (SP) MP Supriya",
+      "db_sentiment": "POSITIVE",
+      "model_sentiment": "NEUTRAL",
+      "confidence": 0.848,
+      "reason": "model_inference",
+      "aspects": {}
+    }
+  ],
+  "samples_mixed": [
+    {
+      "id": "68424ba1369ec1a34f4a6926",
+      "text": "12″ Tan <b>Canvas</b> Journal - COCALICO CREEK. Love the look of books, but hate the price tag and even colors? These tawny linen hard-cover books are",
+      "aspects": {
+        "ui_ux": "neutral",
+        "pricing_value": "negative"
+      },
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "684275d1369ec1a34f4a7167",
+      "text": "11 Embarrassing Ways Middle Class People Pretend To Be Rich While They Stay Broke. ... Canva. It's hard to feel good about your perfectly fine economy",
+      "aspects": {},
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "684817392ad509f2bb9245fa",
+      "text": "I absolutely love <b>Canva</b>, but everything I make is blurry after I download it - Reddit. I'm so sad about it! I have Canva Pro but there's no way",
+      "aspects": {},
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "683256793fcdd855ca247396",
+      "text": "Had nothing better to do so I created a <b>Canva</b> Political Compass lol - Reddit. Pretty mid and ran out of stuff to use halfway through but I did ",
+      "aspects": {},
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "683b19716f74b02681d64cb5",
+      "text": "She Turned 100+ Rejections Into One of the Most Used Tools Online - MSN. She's the co-founder and CEO of Canva, the graphic design tool that took some",
+      "aspects": {
+        "ui_ux": "negative",
+        "performance": "positive",
+        "features": "negative"
+      },
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "683df4b1369ec1a34f494a1f",
+      "text": "Michigan DNR Reports Slow Moose Growth - WGRD 97.9. A few moose have been spotted on Drummond Island, but not many, and none by me. canva.com. My best",
+      "aspects": {
+        "performance": "negative"
+      },
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "68292301e62527a20c354eab",
+      "text": "Unbuckled Driver Pronounced Dead at Scene Southern Minnesota Crash, Woman Injured - KRFO. Canva. #8 Burnsville. According to Redfin, Burnsville is the",
+      "aspects": {
+        "performance": "negative",
+        "pricing_value": "positive",
+        "features": "negative"
+      },
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "686bf6085e52368989fd90b9",
+      "text": "A steamy, stormy week: Remnants of Chantal may soak parts of NJ. And guess what — it can get very hot in a hurry when that happens. Fire. (Canva). Fir",
+      "aspects": {},
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "68598f19cf5983fd3e7fc24a",
+      "text": "Suspected Drunk Driver Crashes Into Fort Worth House - ETSN.fm. Still, the crash left a huge mess and scared everyone involved. X/Canva. Wow, that's t",
+      "aspects": {
+        "performance": "negative",
+        "features": "neutral"
+      },
+      "reason": "contrastive_clause_mixed"
+    },
+    {
+      "id": "684e6160d0b8dd3cf005d163",
+      "text": "Amazon shoppers love this &#39;quiet yet powerful&#39; dehumidifier, and it&#39;s on sale for 20% off. Amazon/Canva. By. Sarah M. Vazquez | NJ Advance",
+      "aspects": {},
+      "reason": "contrastive_clause_mixed"
+    }
+  ],
+  "samples_complaints_caught": [
+    {
+      "id": "683f14ff369ec1a34f4980f8",
+      "text": "Galactus Funware Technology, owner of <b>MPL</b>, has issued a legal notice to ASCI, demanding .... https://www.socialsamosa.com/industry- updates/asc",
+      "db_sentiment": "NEUTRAL",
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f2a11369ec1a34f49867b",
+      "text": "SXSW London: <b>Canva</b> boss warns Gen Z about Gen Alpha in the workplace - City AM. Canva's Head of Europe Duncan Clark suggested that current Mill",
+      "db_sentiment": "NEUTRAL",
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f2a14369ec1a34f4986da",
+      "text": "Even as INDIA bloc pushes for Parliament session on Pahalgam &amp; Op Sindoor, fault lines evident. Leaders from five INDIA bloc parties, the Congress",
+      "db_sentiment": "NEUTRAL",
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f311b369ec1a34f498905",
+      "text": "If Sharad and Ajit Pawar join hands, party workers will welcome it, says Anna Bansode. Bansode, an MLA from Pimpri Assembly seat in Pune district, is ",
+      "db_sentiment": "POSITIVE",
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f4d3f369ec1a34f4990e2",
+      "text": "पोर्टल, राजस्थान सरकार. The government of Rajasthan is committed to public welfare as well being of its public is the priority of the Government.",
+      "db_sentiment": "POSITIVE",
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f7e75369ec1a34f499f76",
+      "text": "Government briefed foreign nations on Pahalgam but kept people in the dark: Opposition to PM. “[NCP(S-P) veteran] Sharad Pawar sahab is also with us. ",
+      "db_sentiment": "NEUTRAL",
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683f7e77369ec1a34f499fa1",
+      "text": "DA welcomes KZN Human Settlements SIU probe, calls for full accountability - Polity.org. Issued by Riona Gokool, MPL - DA KZN Spokesperson on Human Se",
+      "db_sentiment": "POSITIVE",
+      "reason": "model_inference",
+      "aspects": {
+        "customer_support": "neutral"
+      }
+    },
+    {
+      "id": "683f8c81369ec1a34f49a328",
+      "text": "Only 42% of Professionals Confident When Tackling Data-heavy Tasks - Digit.fyi. A new report from Canva reveals that while data use is soaring in toda",
+      "db_sentiment": "NEUTRAL",
+      "reason": "model_inference",
+      "aspects": {
+        "features": "neutral"
+      }
+    },
+    {
+      "id": "683fc4c1369ec1a34f49b06b",
+      "text": "Who Are The Richest People In Montana? - XL Country. It's peace, it's privacy, and it's a breath of fresh air, both literally and figuratively. Credit",
+      "db_sentiment": "POSITIVE",
+      "reason": "model_inference",
+      "aspects": {}
+    },
+    {
+      "id": "683fc4c1369ec1a34f49b071",
+      "text": "Waterline Break Forces Closure of a Portion of Blue Lakes in Twin Falls, Idaho. The pipe break happened near Highland Avenue. Credit Google Maps/Canva",
+      "db_sentiment": "NEUTRAL",
+      "reason": "model_inference",
+      "aspects": {}
+    }
+  ]
+}

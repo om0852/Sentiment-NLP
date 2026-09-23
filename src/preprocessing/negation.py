@@ -20,15 +20,16 @@ class NegationHandler:
         # Punctuation or clauses that break negation scope
         self.scope_breakers = {".", "!", "?", ";", ",", "but", "however", "although", "except"}
 
+        # Precompile combined contraction regex
+        sorted_contr = sorted(self.contractions.keys(), key=len, reverse=True)
+        self.contr_pattern = re.compile(rf"\b({'|'.join(re.escape(c) for c in sorted_contr)})\b", re.IGNORECASE)
+        self.contr_map = {c.lower(): exp for c, exp in self.contractions.items()}
+
     def expand_contractions(self, text: str) -> str:
         """Expands common English contractions like can't -> cannot."""
-        if not text:
-            return ""
-        result = text
-        for contr, expanded in self.contractions.items():
-            pattern = re.compile(rf"\b{re.escape(contr)}\b", re.IGNORECASE)
-            result = pattern.sub(expanded, result)
-        return result
+        if not text or ("'" not in text and "’" not in text):
+            return text
+        return self.contr_pattern.sub(lambda m: self.contr_map.get(m.group(0).lower(), m.group(0)), text)
 
     def apply_negation_scope(self, text: str, max_window: int = 3) -> str:
         """
@@ -43,8 +44,10 @@ class NegationHandler:
         text = self.expand_contractions(text)
 
         tokens = re.findall(r"\w+|[^\w\s]", text)
+        if not any(t.lower() in self.negation_words for t in tokens):
+            return text
+
         result_tokens = []
-        
         in_negation = False
         words_remaining = 0
 

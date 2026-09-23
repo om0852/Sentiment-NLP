@@ -71,6 +71,13 @@ class ContextAnalyzer:
             re.compile(r"\bwithout\s+prior\s+notification\b.*(sunset|contemplate)", re.I),
             re.compile(r"\bunapologetic\s+risks\b.*(usability|accessibility|bewilderment)", re.I),
         ]
+        self.doublespeak_triggers = {
+            "bold", "brave", "stakeholder", "shareholder", "minimalist", "burn rate",
+            "transparency", "visual purity", "generative hallucination", "fragility",
+            "masterclass", "admire", "unscheduled", "contemplate", "unplanned",
+            "sheer consistency", "creative reinterpretation", "elevate", "standstill",
+            "unapologetic", "sunset", "deprecate", "purity"
+        }
 
         # 4. Rhetorical Inquiries & Mockery
         self.rhetorical_mockery_patterns = [
@@ -85,6 +92,11 @@ class ContextAnalyzer:
             re.compile(r"\bwas\s+this\s+.*designed\s+by\s+an\s+escape\s+room\s+architect\b", re.I),
             re.compile(r"\bdoes\s+your\s+qa\s+department\s+actually\s+employ\s+human\s+beings\b", re.I),
         ]
+        self.mockery_triggers = {
+            "who in their", "did someone", "are we paying", "achievement trophy",
+            "secret competition", "temporal rupture", "expected to believe",
+            "escape room", "qa department", "physically possible"
+        }
 
         # 5. Technical Polysemy / Slang Inversions
         self.slang_praise_patterns = [
@@ -95,6 +107,8 @@ class ContextAnalyzer:
             re.compile(r"\b(good\s+riddance\s+because\s+it\s+caused\s+nothing\s+but)\b", re.I),
             re.compile(r"\bactually\s+fixed\s+the\s+bottleneck\b", re.I),
         ]
+        self.slang_praise_triggers = {"wicked", "sick", "criminally", "good riddance", "fixed the bottleneck"}
+
         self.slang_negative_patterns = [
             re.compile(r"\bnever\s+in\s+all\s+my\s+years\b", re.I),
             re.compile(r"\begregious\s+oversight\b", re.I),
@@ -112,6 +126,11 @@ class ContextAnalyzer:
             re.compile(r"\bgreeted\s+with\s+zero\s+enthusiasm\b", re.I),
             re.compile(r"\bchose\s+to\s+ignore\s+before\s+launch\b", re.I),
         ]
+        self.slang_neg_triggers = {
+            "all my years", "egregious", "unvetted", "table the", "screened our",
+            "clipping our", "catastrophic", "compliance", "footprint", "anything but",
+            "telemetry", "illusion", "frustration", "enthusiasm", "ignore before"
+        }
 
         # 6. Litotes / Double Negation / Negation Scope
         self.litotes_negative_patterns = [
@@ -134,13 +153,17 @@ class ContextAnalyzer:
             re.compile(r"\bdidn't\s+leave\s+any\s+loose\s+ends\b", re.I),
             re.compile(r"\bnot\s+a\s+dumpster\s+fire\b", re.I),
         ]
+        self.litotes_triggers = {
+            "not", "no", "cannot", "can't", "isn't", "didn't", "hardly",
+            "far from", "failed to", "nothing", "by no means"
+        }
 
         # 7. Reverse Bait-and-Switch (Expectation of disaster -> turned into triumph)
         self.reverse_bait_and_switch = re.compile(
-            r"\b(prepared\s+to\s+write|fully\s+expected|expecting|thought\s+it\s+would\s+be|was\s+sure\s+it\s+would\s+be)\s+.*"
+            r"\b(prepared\s+to\s+write|fully\s+expected|expecting|thought\s+(?:it|this\s+\w+|the\s+\w+)?\s*would\s+be|was\s+sure\s+it\s+would\s+be)\s+.*"
             r"(scathing|rant|chaos|disaster|dumpster\s+fire|terrible|bad|worst|trash|scam|mid).*"
             r"(but|however|to\s+my\s+disbelief|to\s+my\s+surprise|eat\s+my\s+words|legit\s+shock|turned\s+out).*"
-            r"(brilliantly|absolute\s+joy|massive\s+w|huge\s+respect|zero\s+downtime|clean|slaps|fire|works|love|impressed|full\s+paisa\s+vasool|makhan)",
+            r"(brilliantly|absolute\s+joy|massive\s+w|huge\s+respect|zero\s+downtime|clean|slaps|fire|works|love|impressed|full\s+paisa\s+vasool|makhan|not\s+bad)",
             re.I
         )
 
@@ -153,12 +176,20 @@ class ContextAnalyzer:
             re.compile(r"would\s+suffer\s+again", re.I),
             re.compile(r"huge\s+w.*(crash|broken|fail|suffer|freeze)", re.I),
         ]
+        self.punchline_triggers = {
+            "lie", "cap", "said no one", "psych", "sike", "oh great",
+            "just great", "super great", "love ", "10/10", "huge w"
+        }
 
         # 9. Contrastive Conjunctions & ABSA
         self.contrastive_conjunctions = re.compile(
             r"\b(but|however|although|though|yet|while|unlike|on\s+the\s+other\s+hand|still,?\b|too\s+bad\b|conversely\b|despite\s+that\b|despite\b|nevertheless\b)\b",
             re.I
         )
+        self.contrastive_triggers = {
+            "but", "however", "although", "though", "yet", "while",
+            "unlike", "despite", "nevertheless", "still", "too bad", "conversely"
+        }
 
         self.positive_keywords = {
             "masterpiece", "breathtaking", "world-class", "stunning", "undeniable", "flawlessly",
@@ -191,6 +222,8 @@ class ContextAnalyzer:
                 return True
 
         text_lower = text.lower()
+        if not any(trig in text_lower for trig in self.contrastive_triggers):
+            return False
 
         # 2. Sentence initial dependent clause: While X, Y or Although X, Y or Despite X, Y
         starts_subordinate = bool(re.match(r"^\s*(while|although|even\s+though|despite|though)\b", text_lower))
@@ -274,50 +307,55 @@ class ContextAnalyzer:
         if self.reverse_bait_and_switch.search(raw_lower):
             return "positive", 0.92, False, "reverse_bait_and_switch_detected"
 
-        # 2. Litotes Positive Double Negation
-        for pat in self.litotes_positive_patterns:
-            if pat.search(raw_lower):
-                return "positive", 0.90, False, "litotes_positive_detected"
+        # 2. Litotes (positive and negative) guarded by trigger check
+        if any(t in raw_lower for t in self.litotes_triggers):
+            for pat in self.litotes_positive_patterns:
+                if pat.search(raw_lower):
+                    return "positive", 0.90, False, "litotes_positive_detected"
+            for pat in self.litotes_negative_patterns:
+                if pat.search(raw_lower):
+                    return "negative", 0.92, False, "litotes_negative_detected"
 
-        # 3. Litotes Negative Scope
-        for pat in self.litotes_negative_patterns:
-            if pat.search(raw_lower):
-                return "negative", 0.92, False, "litotes_negative_detected"
+        # 3. Emoji Dissonance & Outage Cheerleading (only if non-ascii chars exist)
+        if any(ord(c) > 127 for c in raw_text):
+            has_celebratory_emoji = bool(self.celebratory_emojis.search(raw_text))
+            has_outage_reality = bool(self.outage_disaster_phrases.search(raw_lower))
+            if has_celebratory_emoji and has_outage_reality:
+                return "negative", 0.92, False, "emoji_dissonance_sarcasm"
 
-        # 4. Emoji Dissonance & Outage Cheerleading
-        has_celebratory_emoji = bool(self.celebratory_emojis.search(raw_text))
-        has_outage_reality = bool(self.outage_disaster_phrases.search(raw_lower))
-        if has_celebratory_emoji and has_outage_reality:
-            return "negative", 0.92, False, "emoji_dissonance_sarcasm"
+        # 4. Corporate Doublespeak & Boardroom Savagery guarded by triggers
+        if any(t in raw_lower for t in self.doublespeak_triggers):
+            for pat in self.corporate_doublespeak_patterns:
+                if pat.search(raw_lower):
+                    return "negative", 0.92, False, "corporate_doublespeak_detected"
 
-        # 5. Corporate Doublespeak & Boardroom Savagery
-        for pat in self.corporate_doublespeak_patterns:
-            if pat.search(raw_lower):
-                return "negative", 0.92, False, "corporate_doublespeak_detected"
+        # 5. Rhetorical Inquiries & Mockery guarded by triggers
+        if any(t in raw_lower for t in self.mockery_triggers):
+            for pat in self.rhetorical_mockery_patterns:
+                if pat.search(raw_lower):
+                    return "negative", 0.92, False, "rhetorical_mockery_detected"
 
-        # 6. Rhetorical Inquiries & Mockery
-        for pat in self.rhetorical_mockery_patterns:
-            if pat.search(raw_lower):
-                return "negative", 0.92, False, "rhetorical_mockery_detected"
+        # 6. Sarcastic Punchline Inversions ("what say is a lie", etc.)
+        if any(t in raw_lower for t in self.punchline_triggers):
+            for pat in self.punchline_lie_patterns:
+                if pat.search(raw_lower):
+                    return "negative", 0.92, False, "sarcastic_irony_detected"
 
-        # 7. Sarcastic Punchline Inversions ("what say is a lie", etc.)
-        for pat in self.punchline_lie_patterns:
-            if pat.search(raw_lower):
-                return "negative", 0.92, False, "sarcastic_irony_detected"
+        # 7. Slang Inversions & Contronyms
+        if any(t in raw_lower for t in self.slang_praise_triggers):
+            for pat in self.slang_praise_patterns:
+                if pat.search(raw_lower):
+                    return "positive", 0.90, False, "slang_inversion_praise"
+        if any(t in raw_lower for t in self.slang_neg_triggers):
+            for pat in self.slang_negative_patterns:
+                if pat.search(raw_lower):
+                    return "negative", 0.90, False, "contronym_negative_detected"
 
-        # 8. Slang Inversions & Contronyms
-        for pat in self.slang_praise_patterns:
-            if pat.search(raw_lower):
-                return "positive", 0.90, False, "slang_inversion_praise"
-        for pat in self.slang_negative_patterns:
-            if pat.search(raw_lower):
-                return "negative", 0.90, False, "contronym_negative_detected"
-
-        # 9. Multi-Clause Contrast & ABSA -> Mixed (CHECKED BEFORE single cultural tropes to avoid clashing)
+        # 8. Multi-Clause Contrast & ABSA -> Mixed (CHECKED BEFORE single cultural tropes to avoid clashing)
         if self._check_contrastive_mixed(raw_text, aspects=aspects):
             return "mixed", 0.90, False, "contrastive_clause_mixed"
 
-        # 10. Cultural Disasters & Triumphs (Option 1)
+        # 9. Cultural Disasters & Triumphs
         for trope in self.cultural_disasters:
             if trope in raw_lower:
                 neg_prefix = [f"not {trope}", f"not a {trope}", f"wasn't {trope}", f"isn't {trope}", f"neither {trope}", f"expecting a {trope}"]
@@ -330,5 +368,5 @@ class ContextAnalyzer:
                 if not any(np in raw_lower for np in neg_prefix):
                     return "positive", 0.92, False, "cultural_triumph_metaphor"
 
-        # 11. Standard model inference fallback
+        # 10. Standard model inference fallback
         return base_label.lower(), base_confidence, (base_confidence < 0.60), "model_inference"

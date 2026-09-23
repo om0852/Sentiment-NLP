@@ -39,7 +39,7 @@ ASPECT_KEYWORDS = {
 }
 
 POSITIVE_SIGNALS = {
-    "fire", "slaps", "clean", "smooth", "fast", "goated", "w", "huge w", "love",
+    "fire", "slap", "slaps", "clean", "smooth", "fast", "goated", "w", "huge w", "love",
     "amazing", "great", "good", "perfect", "chef's kiss", "immaculate", "op",
     "mast", "ekdum mast", "cracked", "bawaal", "jhakaas", "paisa vasool", "solid",
     "awesome", "helpful", "responsive", "quick", "affordable", "worth", "worth it",
@@ -63,8 +63,14 @@ NEGATIVE_SIGNALS = {
 class AspectExtractor:
     def __init__(self):
         self.aspect_patterns: Dict[str, List[re.Pattern]] = {}
+        self.aspect_keyword_sets: Dict[str, set] = {}
+        self.all_keywords: set = set()
+
         for aspect, kws in ASPECT_KEYWORDS.items():
             patterns = []
+            kw_set = set(kws)
+            self.aspect_keyword_sets[aspect] = kw_set
+            self.all_keywords.update(kw_set)
             for kw in kws:
                 patterns.append(re.compile(rf"\b{re.escape(kw)}\b", re.IGNORECASE))
             self.aspect_patterns[aspect] = patterns
@@ -75,6 +81,9 @@ class AspectExtractor:
         Returns a dict mapping aspect_name -> 'positive' | 'negative' | 'neutral'.
         """
         text_lower = text.lower()
+        if not any(k in text_lower for k in self.all_keywords):
+            return {}
+
         extracted: Dict[str, str] = {}
 
         # Sarcastic lie reversal guard
@@ -87,6 +96,9 @@ class AspectExtractor:
         clauses = re.split(r"[.,;!?\n]|(?:\b(?:but|however|although|though|yet|while|on\s+the\s+other\s+hand)\b)", text_lower)
 
         for aspect, patterns in self.aspect_patterns.items():
+            if not any(k in text_lower for k in self.aspect_keyword_sets[aspect]):
+                continue
+
             aspect_clauses = []
             for clause in clauses:
                 if any(p.search(clause) for p in patterns):
