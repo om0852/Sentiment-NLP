@@ -27,6 +27,12 @@ def main():
     # Test command
     test_parser = subparsers.add_parser("test", help="Run pytest automated test suite")
 
+    # Fetch posts command
+    fetch_parser = subparsers.add_parser("fetch-posts", help="Fetch social posts from MongoDB to JSON")
+    fetch_parser.add_argument("--limit", type=int, default=300000, help="Number of posts to fetch (default: 300,000)")
+    fetch_parser.add_argument("--output", type=str, default=None, help="Output JSON path")
+    fetch_parser.add_argument("--batch-size", type=int, default=5000, help="MongoDB cursor batch size (default: 5,000)")
+
     args = parser.parse_args()
 
     # Find python executable in venv if present, otherwise system python
@@ -66,6 +72,13 @@ def main():
         if not os.path.exists(pytest_exe):
             pytest_exe = "pytest"
         subprocess.run([pytest_exe, "tests"], cwd=project_root)
+
+    elif args.command == "fetch-posts":
+        script = os.path.join(project_root, "scripts", "fetch_300k_posts.py")
+        cmd = [venv_python, script, "--limit", str(args.limit), "--batch-size", str(args.batch_size)]
+        if args.output:
+            cmd.extend(["--output", args.output])
+        subprocess.run(cmd, cwd=project_root)
 
     else:
         parser.print_help()
