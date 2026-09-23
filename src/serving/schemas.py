@@ -23,6 +23,9 @@ class SentimentPredictionItem(BaseModel):
     reason: Optional[str] = None
     cached: bool = False
     fallback_result: Optional[Dict[str, Any]] = None
+    is_performance_issue: bool = False
+    is_risk_complaint: bool = False
+    is_mixed: bool = False
 
 class SentimentPredictResponse(BaseModel):
     results: List[SentimentPredictionItem]

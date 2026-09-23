@@ -84,3 +84,31 @@ def test_metrics_endpoint(client):
     data = response.json()
     assert data["total_requests"] > 0
     assert data["total_posts_analyzed"] > 0
+
+def test_alert_flags_and_sub_aspects(client):
+    payload = {
+        "texts": [
+            "The app crashes constantly and lags terribly on mobile.",
+            "I love the design but hate the price tag.",
+            "Normal meeting notes for team sync."
+        ]
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    results = response.json()["results"]
+    
+    # Item 1: Performance issue & risk complaint
+    assert results[0]["is_performance_issue"] is True
+    assert results[0]["is_risk_complaint"] is True
+    assert results[0]["is_mixed"] is False
+
+    # Item 2: Mixed sentiment
+    assert results[1]["is_mixed"] is True
+    assert results[1]["is_performance_issue"] is False
+
+    # Item 3: Neutral notes
+    assert results[2]["is_performance_issue"] is False
+    assert results[2]["is_risk_complaint"] is False
+    assert results[2]["is_mixed"] is False
+
+

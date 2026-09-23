@@ -1,4 +1,5 @@
 import hashlib
+import re
 from collections import OrderedDict
 from typing import Optional, Dict, Any
 
@@ -6,7 +7,9 @@ class SentimentLRUCache:
     """
     High-performance in-memory LRU cache for viral/duplicate social posts.
     Stores up to `max_size` entries (~3-5MB RAM), delivering 0.005 ms hit latency.
-    Supports optional parent context hashing for thread-aware sentiment caching.
+    Supports:
+    - Retweet & URL stripping for viral post deduplication
+    - Parent context hashing for thread-aware sentiment caching
     """
     def __init__(self, max_size: int = 10000):
         self.max_size = max_size
@@ -15,8 +18,11 @@ class SentimentLRUCache:
         self.misses = 0
 
     def _hash_key(self, text: str, context: Optional[str] = None) -> str:
-        # Normalize text to maximize cache hit rate on whitespace/casing variations
-        normalized = " ".join(text.lower().split())
+        # Strip URLs and leading RT @user: to maximize hit rate on viral social retweets
+        cleaned = re.sub(r"https?://\S+|www\.\S+", "", text.lower())
+        cleaned = re.sub(r"^rt\s+@[\w_]+:\s*", "", cleaned)
+        normalized = " ".join(cleaned.split())
+        
         if context and isinstance(context, str) and context.strip():
             norm_ctx = " ".join(context.lower().split())
             combined = f"{normalized}|||ctx:{norm_ctx}"

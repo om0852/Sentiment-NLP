@@ -15,6 +15,8 @@ class ContextAnalyzer:
     7. Garden Path & Subordinate Negation Boundary Shifts
     8. Double Negations, Litotes & Reverse Bait-and-Switch
     9. ABSA Multi-Clause Contrast -> Mixed Classification
+    10. Advanced Sarcasm (Conditional traps, faux gratitude, passive-aggressive shoutouts)
+    11. Precision & Nuance (Objective news wires, betting tables & catalog neutralizer)
     """
     def __init__(self):
         # 1. Load cultural tropes dictionary
@@ -181,7 +183,31 @@ class ContextAnalyzer:
             "just great", "super great", "love ", "10/10", "huge w"
         }
 
-        # 9. Contrastive Conjunctions & ABSA
+        # 9. Context Superiority: Advanced Sarcasm & Backhanded Compliment Detectors
+        self.advanced_sarcasm_rules = [
+            ("conditional_trap_sarcasm", re.compile(r"\bworks?\s+(great|fine|wonders|perfect)\s+if\s+(your\s+goal|you\s+wanted|you\s+like|you\s+enjoy|the\s+plan\s+was)\s+(?:was\s+)?to\s+(crash|lose|burn|freeze|destroy|waste|brick)\b", re.I)),
+            ("faux_gratitude_sarcasm", re.compile(r"\b(thank\s+you|thanks)\s+(so\s+much\s+)?for\s+(reminding\s+me\s+why|showing\s+us\s+how\s+not\s+to|breaking\s+my|wiping\s+out|losing\s+our|wasting\s+\d+|charging\s+us\s+twice)\b", re.I)),
+            ("passive_aggressive_praise", re.compile(r"\b(shoutout|huge\s+props|congrats|bravo|great\s+job)\s+to\s+.*\s+(for\s+breaking|for\s+crashing|right\s+before\s+the\s+weekend|on\s+taking\s+\d+\s+(weeks|months)|for\s+deleting)\b", re.I)),
+            ("rhetorical_imagine_derision", re.compile(r"\b(imagine|imagine\s+being|imagine\s+paying|imagine\s+charging)\b.*\b(can't\s+even|doesn't\s+even|that\s+crashes|broken|waste|brick)\b", re.I)),
+        ]
+        self.advanced_sarcasm_triggers = {"works", "work", "thank", "thanks", "shoutout", "huge props", "congrats", "bravo", "great job", "imagine"}
+
+        # 10. Precision & Nuance: Objective News Wires, Betting Tables & Catalog Neutralizer
+        self.objective_news_patterns = [
+            re.compile(r"\b(cricket\s+betting\s+odds|betting\s+odds|odds\s+by|match\s+winner|upcoming\s+match)\b", re.I),
+            re.compile(r"(?:on\s+X:\s*&quot;|\s*\|\s*Social\s+Samosa|\s*-\s*LinkedIn\b|\s*-\s*Reuters\b|\s*-\s*Bloomberg\b|\s*-\s*City\s+AM\b|\s*-\s*MSN\b|\s*-\s*K99\b)", re.I),
+            re.compile(r"\b(press\s+photo|market\s+overview|closing\s+bell|quarterly\s+earnings\s+call\s+scheduled|round-up\s+for)\b", re.I),
+            re.compile(r"\b(specifications?|hard-cover\s+books?|in\s+stock\s+now|free\s+shipping\s+on\s+orders\s+over|available\s+in\s+sizes)\b", re.I),
+        ]
+        self.first_person_emotive_pattern = re.compile(
+            r"\b(i\s+(?:love|hate|adore|despise|switched|regret|loathe|cannot\s+stand)|"
+            r"my\s+(?:opinion|experience\s+was|heart\s+breaks)|"
+            r"worst\s+experience|best\s+thing\s+ever|complete\s+garbage|absolute\s+fire|full\s+paisa\s+vasool)\b",
+            re.I
+        )
+        self.objective_triggers = {"betting odds", "match winner", "on x:", "social samosa", "- linkedin", "- reuters", "- bloomberg", "- city am", "- msn", "- k99", "press photo", "market overview", "specifications", "in stock"}
+
+        # 11. Contrastive Conjunctions & ABSA
         self.contrastive_conjunctions = re.compile(
             r"\b(but|however|although|though|yet|while|unlike|on\s+the\s+other\s+hand|still,?\b|too\s+bad\b|conversely\b|despite\s+that\b|despite\b|nevertheless\b)\b",
             re.I
@@ -341,7 +367,13 @@ class ContextAnalyzer:
                 if pat.search(raw_lower):
                     return "negative", 0.92, False, "sarcastic_irony_detected"
 
-        # 7. Slang Inversions & Contronyms
+        # 7. Advanced Sarcasm: Conditional traps, faux gratitude & passive-aggressive shoutouts
+        if any(t in raw_lower for t in self.advanced_sarcasm_triggers):
+            for reason_name, pat in self.advanced_sarcasm_rules:
+                if pat.search(raw_text):
+                    return "negative", 0.92, False, reason_name
+
+        # 8. Slang Inversions & Contronyms
         if any(t in raw_lower for t in self.slang_praise_triggers):
             for pat in self.slang_praise_patterns:
                 if pat.search(raw_lower):
@@ -351,11 +383,11 @@ class ContextAnalyzer:
                 if pat.search(raw_lower):
                     return "negative", 0.90, False, "contronym_negative_detected"
 
-        # 8. Multi-Clause Contrast & ABSA -> Mixed (CHECKED BEFORE single cultural tropes to avoid clashing)
+        # 9. Multi-Clause Contrast & ABSA -> Mixed (CHECKED BEFORE single cultural tropes to avoid clashing)
         if self._check_contrastive_mixed(raw_text, aspects=aspects):
             return "mixed", 0.90, False, "contrastive_clause_mixed"
 
-        # 9. Cultural Disasters & Triumphs
+        # 10. Cultural Disasters & Triumphs
         for trope in self.cultural_disasters:
             if trope in raw_lower:
                 neg_prefix = [f"not {trope}", f"not a {trope}", f"wasn't {trope}", f"isn't {trope}", f"neither {trope}", f"expecting a {trope}"]
@@ -368,5 +400,12 @@ class ContextAnalyzer:
                 if not any(np in raw_lower for np in neg_prefix):
                     return "positive", 0.92, False, "cultural_triumph_metaphor"
 
-        # 10. Standard model inference fallback
+        # 11. Precision & Nuance: Objective News & E-commerce Catalog Neutralizer
+        # If no explicit emotive sentiment, neutralize factual betting tables, news wire headers, and catalog specs
+        if any(t in raw_lower for t in self.objective_triggers):
+            if any(p.search(raw_text) for p in self.objective_news_patterns):
+                if not bool(self.first_person_emotive_pattern.search(raw_text)):
+                    return "neutral", 0.85, False, "objective_news_or_listing"
+
+        # 12. Standard model inference fallback
         return base_label.lower(), base_confidence, (base_confidence < 0.60), "model_inference"

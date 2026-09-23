@@ -277,6 +277,21 @@ async def predict_sentiment(req: SentimentPredictRequest):
             else:
                 calibrated_probs = pred["probabilities"]
 
+            # Flags for business intelligence / alerting
+            is_perf = (aspects.get("performance") == "negative")
+            is_risk = (final_label == "negative") and (
+                is_perf 
+                or aspects.get("customer_support") == "negative"
+                or reason in [
+                    "cultural_disaster_metaphor", "emoji_dissonance_sarcasm", 
+                    "corporate_doublespeak_detected", "rhetorical_mockery_detected",
+                    "conditional_trap_sarcasm", "faux_gratitude_sarcasm"
+                ]
+            )
+            is_mixed = (final_label == "mixed") or bool(
+                aspects and ("positive" in aspects.values() and "negative" in aspects.values())
+            )
+
             pred_item = SentimentPredictionItem(
                 text=raw_t,
                 context=ctx,
@@ -287,7 +302,10 @@ async def predict_sentiment(req: SentimentPredictRequest):
                 fallback_required=needs_fallback,
                 reason=reason,
                 cached=False,
-                fallback_result=fallback_res
+                fallback_result=fallback_res,
+                is_performance_issue=is_perf,
+                is_risk_complaint=is_risk,
+                is_mixed=is_mixed
             )
             
             # Store into LRU cache (with context hashing)

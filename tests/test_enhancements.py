@@ -124,3 +124,42 @@ def test_complex_real_world_posts():
         assert item2["label"] == "negative"
         assert item2["probabilities"]["negative"] > 0.85
         assert item2["reason"] == "sarcastic_irony_detected"
+
+def test_precision_and_advanced_sarcasm():
+    with TestClient(app) as client:
+        # Precision & Nuance: Objective News & Betting Tables
+        post_news = "Cricket Betting Odds by SuperSports - SuperSportBet. Match Winner."
+        res_news = client.post("/predict", json={"texts": [post_news]}).json()
+        item_news = res_news["results"][0]
+        assert item_news["label"] == "neutral"
+        assert item_news["reason"] == "objective_news_or_listing"
+
+        # Context Superiority: Conditional Trap Sarcasm
+        post_trap = "Works great if your goal was to crash my entire browser every 5 minutes."
+        res_trap = client.post("/predict", json={"texts": [post_trap]}).json()
+        item_trap = res_trap["results"][0]
+        assert item_trap["label"] == "negative"
+        assert item_trap["reason"] == "conditional_trap_sarcasm"
+
+        # Context Superiority: Faux Gratitude
+        post_grat = "Thank you for reminding me why I cancelled my subscription last month."
+        res_grat = client.post("/predict", json={"texts": [post_grat]}).json()
+        item_grat = res_grat["results"][0]
+        assert item_grat["label"] == "negative"
+        assert item_grat["reason"] == "faux_gratitude_sarcasm"
+
+        # Context Superiority: Passive-Aggressive Shoutouts
+        post_shout = "Huge props to the dev team for breaking production right before the long weekend."
+        res_shout = client.post("/predict", json={"texts": [post_shout]}).json()
+        item_shout = res_shout["results"][0]
+        assert item_shout["label"] == "negative"
+        assert item_shout["reason"] == "passive_aggressive_praise"
+
+        # Context Superiority: Rhetorical Imagine Derision
+        post_imag = "Imagine charging $50/mo for a tool that can't even export a clean PDF."
+        res_imag = client.post("/predict", json={"texts": [post_imag]}).json()
+        item_imag = res_imag["results"][0]
+        assert item_imag["label"] == "negative"
+        assert item_imag["reason"] == "rhetorical_imagine_derision"
+
+

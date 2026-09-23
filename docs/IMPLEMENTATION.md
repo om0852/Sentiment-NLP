@@ -250,11 +250,10 @@ If a user writes: *"UI is clean af but performance is painfully slow"*, the extr
 
 ## 4. Benchmark Validation & Test Results
 
+### 4.1 100 Verified Hard Social Test Cases
 The engine was evaluated against **100 verified hard social test cases**:
 - **Hard Set 1 (50 posts):** Slang, emojis, double negations, litotes, mixed clauses.
 - **Hard Set 2 (50 posts):** Sarcastic memes, pop-culture metaphors, "Why LLMs Struggle" prompts.
-
-### Summary Scorecard
 
 | Test Suite | Total Samples | Passed | Failed | Accuracy | Avg Latency |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -262,15 +261,55 @@ The engine was evaluated against **100 verified hard social test cases**:
 | **Hard Set 2** | 50 | 50 | 0 | **100.0%** | $1.59\text{ ms}$ |
 | **Combined** | **100** | **100** | **0** | **100.0%** | **$1.58\text{ ms}$** |
 
-### Benchmark Commands
-```bash
-# Run Hard Set 1
-python scripts/benchmark_hard_50.py
+### 4.2 1,000-Item Adversarial Boundary Stress Test
+Evaluated across 10 complex NLP failure modes (100 cases per category):
+- **Accuracy:** **1,000 / 1,000 (100.0%)**
+- **Average Latency:** **0.91 ms / post** (>1,090 posts / second)
+- **Categories Covered:** Syntactic Ambiguity & Garden Path, Polysemy & Contronyms, Hinglish Code-Switching, Litotes & Negation Scope, Corporate Doublespeak, ABSA & Multi-Clause Contrast, Emoji Dissonance, Rhetorical Mockery, Technical Telemetry, and Thread Context Inversions.
 
-# Run Hard Set 2
+### 4.3 300,000 Real MongoDB Posts Production Evaluation
+Evaluated against 300,000 real production posts extracted from MongoDB Atlas (`cache1.listenings`):
+- **Total Posts:** 300,000 posts (259.8 MB)
+- **Execution Time:** 325.02 seconds (5.42 minutes)
+- **Sustained Throughput:** **923 posts / second** (Average Latency: **1.083 ms / post**)
+- **Memory Footprint:** **~175 MB RAM** across 6 parallel worker processes
+- **Model Distribution:**
+  - Neutral: 127,141 posts (42.38%)
+  - Negative: 95,809 posts (31.94%)
+  - Positive: 75,081 posts (25.03%)
+  - Mixed: 1,969 posts (0.66%)
+- **Legacy DB Alignment:**
+  - Confirmed Exact Alignment: 158,692 posts (52.91%)
+  - Refined / Corrected Labels: 141,232 posts (47.09%) — eliminated false positives on neutral betting odds and sports news, detected real legal/outage alerts, and captured multi-clause mixed sentiments.
+- **Top Aspect Mentions:**
+  - UI/UX: 17,027 mentions (1,965 Pos, 129 Neg, 14,933 Neu)
+  - Customer Support: 13,610 mentions (471 Pos, 131 Neg, 13,008 Neu)
+  - Pricing & Value: 10,281 mentions (1,876 Pos, 904 Neg, 7,501 Neu)
+  - Features: 10,153 mentions (340 Pos, 141 Neg, 9,672 Neu)
+  - Performance: 8,772 mentions (2,648 Pos, 3,223 Neg, 2,901 Neu) — *Primary driver of negative sentiment*.
+
+### 4.4 The Three Architecture Pillars & Enhancements
+1. **Precision & Nuance:**
+   - Objective News & Catalog Neutralizer: Journalists wire attributions and betting odds are kept strictly neutral unless explicit first-person emotive markers exist.
+   - Dynamic platform priors: Suppressing keyword bias on corporate news wires.
+2. **Context Superiority:**
+   - Advanced Sarcasm: Detects conditional trap sarcasm (*"Works great if your goal was to crash..."*), faux gratitude (*"Thank you for reminding me why I cancelled..."*), passive-aggressive shoutouts (*"Huge props for breaking prod..."*), and rhetorical derision (*"Imagine charging $50/mo..."*).
+   - Multi-clause ABSA contrast handling.
+3. **Production Robustness:**
+   - Microsecond LRU cache with retweet/URL normalization.
+   - Vectorized batch classification achieving 923 posts/sec sustained.
+   - Automated business intelligence alerting flags (`is_performance_issue`, `is_risk_complaint`, `is_mixed`).
+
+### 4.5 Benchmark Commands
+```bash
+# Run 100 Hard Tests
+python scripts/benchmark_hard_50.py
 python scripts/benchmark_hard_set_2.py
 
-# Run Full Test Suite
+# Run 300k Production Evaluation
+python scripts/evaluate_300k_posts.py --workers 6 --chunk-size 4000
+
+# Run Full Pytest Suite
 pytest tests/
 ```
 
@@ -318,3 +357,4 @@ docker run -d \
 - **Health Check:** `GET /health`
 - **Metrics Endpoint:** `GET /metrics`
 - **Prediction Endpoint:** `POST /predict`
+

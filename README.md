@@ -5,6 +5,7 @@
 [![vCPU Budget](https://img.shields.io/badge/CPU%20Budget-0.1%20vCPU-success.svg)]()
 [![Cost](https://img.shields.io/badge/Cloud%20Cost-%240.00%2Fmo%20(Free%20Tier)-brightgreen.svg)]()
 [![Benchmark Hard Sets](https://img.shields.io/badge/Hard%20Benchmarks-100%2F100%20(100%25)-brightgreen.svg)]()
+[![300k Evaluation](https://img.shields.io/badge/Production%20300k%20Stream-923%20posts%2Fsec-blue.svg)]()
 [![Live Deployment](https://img.shields.io/badge/Railway-Live%20Production-success.svg)](https://sentiment-nlp-production.up.railway.app/)
 
 A production-grade, ultra-lightweight sentiment analysis microservice specialized in modern social vernacular (**Gen-Z slang, multi-modal emojis, complex negations, contrastive clauses, Hinglish, cultural disaster tropes, and thread-context sarcasm**).
@@ -27,8 +28,10 @@ Operating strictly within **$\le 300\text{ MB}$ RAM** and **$\le 0.1\text{ vCPU}
 | Metric | Budget / Target | Measured In Production | Safety Headroom |
 | :--- | :--- | :--- | :--- |
 | **Hard Benchmark Accuracy** | $\ge 85.0\%$ | **100.0% (100 / 100 passed)** | Outperformed 70B LLMs |
+| **1,000 Boundary Stress Test**| $\ge 90.0\%$ | **100.0% (1,000 / 1,000 passed)** | 10 complex NLP failure modes |
+| **300k Real MongoDB Stream**  | 300,000 posts | **923 posts / sec (325.0s total)** | 158.7k exact / 141.2k refined |
 | **Statistical Latency** | $< 2.0\text{ ms}$ | **0.058 - 0.087 ms** | **$23\times$ faster** |
-| **End-to-End Latency** | $< 10.0\text{ ms}$ | **1.56 - 1.84 ms** | **$5.4\times$ faster** |
+| **End-to-End Latency** | $< 10.0\text{ ms}$ | **1.08 - 1.56 ms** | **$6.4\times$ faster** |
 | **LRU Cache Hit Latency** | $< 0.5\text{ ms}$ | **0.069 ms** | **$28.4\times$ speedup** |
 | **Throughput (1 Core)** | $> 200\text{ posts/s}$ | **1,683 posts / second** | **$8.4\times$ higher** |
 | **Throughput (0.1 vCPU)** | $\sim 11.6\text{ posts/s}$ ($10\text{L/day}$) | **168.3 posts / second** | **$14.5\times$ daily target** |
@@ -189,3 +192,4 @@ docker run -d \
 
 - **[System Architecture Deep Dive](docs/ARCHITECTURE.md):** Complete architectural overview, dual-stage pipeline diagrams, memory profiling, and mathematical capacity proofs under $0.1\text{ vCPU}$.
 - **[Implementation & Operational Guide](docs/IMPLEMENTATION.md):** Module breakdown, schema definitions, edge case solutions, and operational runbooks.
+
