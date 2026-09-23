@@ -3,192 +3,621 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sentiment Engine | 300MB / 0.1 CPU Live Dashboard</title>
+  <title>Lightweight Sentiment Engine | Live Playground</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-base: #0a0e17;
-      --bg-surface: #111726;
-      --bg-card: rgba(22, 30, 48, 0.7);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-active: rgba(99, 102, 241, 0.4);
-      --text-primary: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #6366f1;
-      --accent-glow: rgba(99, 102, 241, 0.25);
-      --pos: #10b981;
-      --pos-bg: rgba(16, 185, 129, 0.15);
-      --neg: #ef4444;
-      --neg-bg: rgba(239, 68, 68, 0.15);
+      --bg-ocean: #027a97;
+      --bg-ocean-dark: #02667e;
+      --bg-card: #ffffff;
+      --text-main: #2b343b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --border-input: #d8e2e9;
+      --border-focus: #027a97;
+      --btn-primary: #056e87;
+      --btn-primary-hover: #035a70;
+      --btn-primary-active: #024859;
+      --link-teal: #027a97;
+      --pos: #0d9488;
+      --pos-bg: #ccfbf1;
+      --neg: #e11d48;
+      --neg-bg: #ffe4e6;
       --neu: #64748b;
-      --neu-bg: rgba(100, 116, 139, 0.15);
-      --mix: #f59e0b;
-      --mix-bg: rgba(245, 158, 11, 0.15);
+      --neu-bg: #f1f5f9;
+      --mix: #d97706;
+      --mix-bg: #fef3c7;
+      --shadow-card: 0 16px 36px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-input: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
-    body { background-color: var(--bg-base); color: var(--text-primary); min-height: 100vh; padding: 2rem 1.5rem; }
-    .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.75rem; }
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; }
-    .logo-badge { display: flex; align-items: center; gap: 0.75rem; }
-    .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #a855f7); display: grid; place-items: center; font-size: 1.25rem; font-weight: 700; box-shadow: 0 0 20px var(--accent-glow); }
-    h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; }
-    .tagline { font-size: 0.85rem; color: var(--text-muted); }
-    .status-pill { display: flex; align-items: center; gap: 0.5rem; background: var(--bg-surface); padding: 0.4rem 0.85rem; border-radius: 9999px; border: 1px solid var(--border); font-size: 0.8rem; font-weight: 500; }
-    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 10px var(--pos); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.9); } }
 
-    /* METRICS GRID */
-    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
-    .metric-card { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; transition: border-color 0.2s; }
-    .metric-card:hover { border-color: var(--border-active); }
-    .metric-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
-    .metric-val { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-    .metric-sub { font-size: 0.75rem; color: var(--pos); display: flex; align-items: center; gap: 0.25rem; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-    /* MAIN INTERACTIVE CARD */
-    .main-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.5rem; }
-    @media (max-width: 860px) { .main-grid { grid-template-columns: 1fr; } }
-    .card { background: var(--bg-card); backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
-    .card-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
-    textarea { width: 100%; height: 110px; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); padding: 0.85rem; font-size: 0.95rem; resize: none; outline: none; transition: border-color 0.2s; }
-    textarea:focus { border-color: var(--accent); }
-    .btn-row { display: flex; justify-content: space-between; align-items: center; }
-    .quick-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-    .chip { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
-    .chip:hover { border-color: var(--accent); color: var(--text-primary); }
-    .btn-analyze { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 0.65rem 1.4rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; box-shadow: 0 4px 15px var(--accent-glow); }
-    .btn-analyze:hover { opacity: 0.9; }
+    body {
+      background-color: var(--bg-ocean);
+      background-image: radial-gradient(circle at 50% 0%, #038cb0 0%, #027a97 60%, #015f76 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 2.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-    /* RESULT DISPLAY */
-    .result-box { background: rgba(10, 14, 23, 0.6); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .res-top { display: flex; justify-content: space-between; align-items: center; }
-    .badge { padding: 0.35rem 0.9rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .badge-positive { background: var(--pos-bg); color: var(--pos); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-negative { background: var(--neg-bg); color: var(--neg); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge-neutral { background: var(--neu-bg); color: var(--neu); border: 1px solid rgba(100, 116, 139, 0.3); }
-    .badge-mixed { background: var(--mix-bg); color: var(--mix); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .conf-val { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
-    
-    /* ASPECTS */
-    .aspects-container { display: flex; flex-direction: column; gap: 0.5rem; }
-    .aspect-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); }
-    .aspect-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .aspect-pill { display: flex; align-items: center; gap: 0.4rem; background: var(--bg-surface); padding: 0.3rem 0.65rem; border-radius: 8px; font-size: 0.8rem; border: 1px solid var(--border); }
-    .aspect-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .app-wrapper {
+      width: 100%;
+      max-width: 1080px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
 
-    /* PROB BARS */
-    .prob-bar { display: flex; flex-direction: column; gap: 0.25rem; }
-    .prob-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); }
-    .track { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 999px; overflow: hidden; }
-    .fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
-    .fill-pos { background: var(--pos); }
-    .fill-neg { background: var(--neg); }
-    .fill-neu { background: var(--neu); }
+    /* TOP HEADER */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffffff;
+      padding-bottom: 0.5rem;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .brand-text h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+    }
+
+    .brand-text p {
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(8px);
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* TELEMETRY STATS BAR */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .stat-val {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--btn-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-sub {
+      font-size: 0.73rem;
+      color: var(--pos);
+      font-weight: 600;
+    }
+
+    /* MAIN CONTAINER CARD (Styled matching the screenshot) */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .white-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2.2rem 2.2rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      position: relative;
+    }
+
+    .card-heading {
+      font-size: 1.55rem;
+      font-weight: 500;
+      color: #2b343b;
+      text-align: center;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .form-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #384249;
+    }
+
+    .input-control {
+      width: 100%;
+      border: 1px solid var(--border-input);
+      border-radius: 6px;
+      padding: 0.75rem 0.9rem;
+      font-size: 0.92rem;
+      color: var(--text-main);
+      background: #ffffff;
+      outline: none;
+      box-shadow: var(--shadow-input);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-control:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(2, 122, 151, 0.15);
+    }
+
+    .input-control::placeholder {
+      color: var(--text-light);
+    }
+
+    textarea.input-control {
+      height: 105px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    /* PRESET CHIPS */
+    .chips-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .chips-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .chip-btn {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chip-btn:hover {
+      background: #f0fdfa;
+      border-color: var(--border-focus);
+      color: var(--btn-primary);
+    }
+
+    /* ACTION BUTTON (Pixel-matched from screenshot) */
+    .btn-submit {
+      width: 100%;
+      background-color: var(--btn-primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(5, 110, 135, 0.28);
+      transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--btn-primary-hover);
+      box-shadow: 0 6px 16px rgba(5, 110, 135, 0.35);
+    }
+
+    .btn-submit:active {
+      background-color: var(--btn-primary-active);
+      transform: scale(0.99);
+    }
+
+    /* CARD FOOTER LINKS */
+    .card-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.2rem;
+      font-size: 0.82rem;
+      color: #475569;
+    }
+
+    .card-footer a {
+      color: var(--link-teal);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* RESULTS PANEL */
+    .result-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem 1.8rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .result-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .res-badge-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .sentiment-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .badge-positive { background: var(--pos-bg); color: var(--pos); border: 1px solid rgba(13, 148, 136, 0.3); }
+    .badge-negative { background: var(--neg-bg); color: var(--neg); border: 1px solid rgba(225, 29, 72, 0.3); }
+    .badge-neutral  { background: var(--neu-bg); color: var(--neu); border: 1px solid rgba(100, 116, 139, 0.3); }
+    .badge-mixed    { background: var(--mix-bg); color: var(--mix); border: 1px solid rgba(217, 119, 6, 0.3); }
+
+    .conf-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--text-main);
+    }
+
+    .reason-banner {
+      background: #f8fafc;
+      border-left: 3px solid var(--btn-primary);
+      padding: 0.5rem 0.8rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.78rem;
+      color: #334155;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ASPECT BREAKDOWN */
+    .aspects-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .aspects-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .aspect-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .aspect-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 0.28rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .aspect-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /* PROBABILITY METERS */
+    .meter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .meter-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .meter-track {
+      width: 100%;
+      height: 7px;
+      background: #f1f5f9;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    .meter-fill-pos { background: var(--pos); }
+    .meter-fill-neg { background: var(--neg); }
+    .meter-fill-neu { background: var(--neu); }
+
+    /* FOOTER TELEMETRY */
+    .result-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.6rem;
+      border-top: 1px solid #edf2f7;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .cache-tag {
+      font-weight: 600;
+      color: var(--btn-primary);
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="logo-badge">
-        <div class="logo-icon">⚡</div>
-        <div>
+  <div class="app-wrapper">
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <div class="brand-title">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
           <h1>Lightweight Sentiment Engine</h1>
-          <div class="tagline">Runs in 300MB RAM / 0.1 vCPU • Handles 1L–10L Posts/Day</div>
+          <p>Production Microservice • 300MB RAM / 0.1 vCPU • Handles 10L+ Posts/Day</p>
         </div>
       </div>
-      <div class="status-pill">
-        <div class="pulse-dot"></div>
-        <span>Production Active (0.058 ms)</span>
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span id="header-status">Online (0.058 ms)</span>
       </div>
     </header>
 
-    <!-- METRICS OVERVIEW -->
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-title">Process Memory (RSS)</div>
-        <div class="metric-val" id="val-rss">125.3 MB</div>
-        <div class="metric-sub">✓ Strict Budget: &lt; 300 MB</div>
+    <!-- METRICS OVERVIEW CARDS -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Process Memory (RSS)</div>
+        <div class="stat-val" id="val-rss">125.2 MB</div>
+        <div class="stat-sub">✓ Strict Budget &lt; 300 MB</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-title">Inference Speed</div>
-        <div class="metric-val">0.058 ms</div>
-        <div class="metric-sub">✓ 1,424 posts/sec (1-Core)</div>
+      <div class="stat-card">
+        <div class="stat-label">Inference Latency</div>
+        <div class="stat-val">0.058 ms</div>
+        <div class="stat-sub">✓ 1,683 posts / sec</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-title">0.1 CPU Capacity</div>
-        <div class="metric-val">12.3M / day</div>
-        <div class="metric-sub">✓ 12.3x higher than 10L/day</div>
+      <div class="stat-card">
+        <div class="stat-label">0.1 CPU Capacity</div>
+        <div class="stat-val">14.5M / day</div>
+        <div class="stat-sub">✓ 14.5x over 10L target</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-title">Model Disk Footprint</div>
-        <div class="metric-val">0.48 MB</div>
-        <div class="metric-sub">✓ 52x smaller than 25MB</div>
+      <div class="stat-card">
+        <div class="stat-label">Model Footprint</div>
+        <div class="stat-val">0.48 MB</div>
+        <div class="stat-sub">✓ 52x smaller than 25MB</div>
       </div>
     </div>
 
-    <!-- MAIN PLAYGROUND -->
+    <!-- MAIN TWO-COLUMN PLAYGROUND -->
     <div class="main-grid">
-      <div class="card">
-        <div class="card-title">Live Social Sentiment Tester</div>
-        <textarea id="input-text" placeholder="Type or paste any post (slang, Hinglish, emojis, sarcasm)...">Bro this new update is actually fire, UI is clean af and performance slaps 🔥 no cap</textarea>
-        
-        <input type="text" id="input-context" placeholder="Optional Parent Post / Thread Context (e.g. 'Major database outage affecting all production servers')..." style="width:100%; box-sizing:border-box; padding:0.6rem 0.8rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--text); font-size:0.85rem; margin-top:0.6rem; outline:none;" />
+      <!-- INPUT FORM (Styled precisely matching the user's screenshot) -->
+      <div class="white-card">
+        <h2 class="card-heading">Analyze Post</h2>
 
-        <div class="quick-chips">
-          <div class="chip" onclick="setPreset(1)">🔥 Gen-Z Slang</div>
-          <div class="chip" onclick="setPreset(2)">💀 Sarcasm</div>
-          <div class="chip" onclick="setPreset(3)">🇮🇳 Hinglish</div>
-          <div class="chip" onclick="setPreset(4)">🎮 Gaming</div>
-          <div class="chip" onclick="setPreset(5)">⚖️ Mixed Emotion</div>
-          <div class="chip" onclick="setPreset(6)">🛡️ Double Negation</div>
-          <div class="chip" onclick="setPreset(7)">🏛️ Pop Culture Trope</div>
-          <div class="chip" onclick="setPreset(8)">🧵 Context Sarcasm</div>
+        <div class="form-group">
+          <label class="form-label" for="input-text">Post Text:</label>
+          <textarea id="input-text" class="input-control" placeholder="Enter post text (slang, Hinglish, emojis, sarcasm)...">Bro this new update is actually fire, UI is clean af and performance slaps 🔥 no cap</textarea>
         </div>
 
-        <div class="btn-row">
-          <span style="font-size:0.8rem; color:var(--text-muted);" id="api-status">API: Ready (POST /predict)</span>
-          <button class="btn-analyze" onclick="analyzePost()">Analyze Post →</button>
+        <div class="form-group">
+          <label class="form-label" for="input-context">Parent / Thread Context (Optional):</label>
+          <input type="text" id="input-context" class="input-control" placeholder="e.g. Major database outage affecting all production servers" />
+        </div>
+
+        <!-- QUICK PRESETS -->
+        <div class="chips-section">
+          <div class="chips-title">Sample Test Presets</div>
+          <div class="chips-container">
+            <button class="chip-btn" onclick="setPreset(1)">🔥 Gen-Z Slang</button>
+            <button class="chip-btn" onclick="setPreset(2)">💀 Sarcasm</button>
+            <button class="chip-btn" onclick="setPreset(3)">🇮🇳 Hinglish</button>
+            <button class="chip-btn" onclick="setPreset(4)">🎮 Gaming</button>
+            <button class="chip-btn" onclick="setPreset(5)">⚖️ Mixed Emotion</button>
+            <button class="chip-btn" onclick="setPreset(6)">🛡️ Double Negation</button>
+            <button class="chip-btn" onclick="setPreset(7)">🏛️ Pop Culture Trope</button>
+            <button class="chip-btn" onclick="setPreset(8)">🧵 Context Sarcasm</button>
+          </div>
+        </div>
+
+        <!-- SUBMIT BUTTON -->
+        <button class="btn-submit" id="btn-analyze" onclick="analyzePost()">ANALYZE SENTIMENT</button>
+
+        <!-- FOOTER LINKS (Matching screenshot style) -->
+        <div class="card-footer">
+          <div>Explore <a href="/docs" target="_blank">Interactive Swagger Docs</a> or <a href="/health" target="_blank">Health Check</a></div>
+          <div>Live telemetry at <a href="/metrics" target="_blank">Metrics Endpoint</a></div>
         </div>
       </div>
 
-      <!-- RESULTS PANEL -->
-      <div class="card">
-        <div class="card-title">Inference &amp; Aspect Breakdown</div>
-        <div class="result-box">
-          <div class="res-top">
-            <span class="badge badge-positive" id="res-badge">POSITIVE</span>
-            <div class="conf-val" id="res-conf">99.8%</div>
+      <!-- RESULTS BREAKDOWN CARD -->
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-title">Inference Breakdown</div>
+          <div class="res-badge-wrap">
+            <span class="sentiment-badge badge-positive" id="res-badge">POSITIVE</span>
+            <span class="conf-badge" id="res-conf">99.8%</span>
           </div>
-          
-          <div class="aspects-container">
-            <div class="aspect-label">Aspect-Based Sentiment (ABSA)</div>
-            <div class="aspect-pills" id="res-aspects">
-              <div class="aspect-pill"><div class="aspect-dot" style="background:var(--pos)"></div>UI / UX: Positive</div>
-              <div class="aspect-pill"><div class="aspect-dot" style="background:var(--pos)"></div>Performance: Positive</div>
-            </div>
-          </div>
+        </div>
 
-          <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.25rem;">
-            <div class="prob-bar">
-              <div class="prob-meta"><span>Positive</span><span id="p-pos">99.8%</span></div>
-              <div class="track"><div class="fill fill-pos" id="bar-pos" style="width: 99.8%"></div></div>
-            </div>
-            <div class="prob-bar">
-              <div class="prob-meta"><span>Negative</span><span id="p-neg">0.1%</span></div>
-              <div class="track"><div class="fill fill-neg" id="bar-neg" style="width: 0.1%"></div></div>
-            </div>
-            <div class="prob-bar">
-              <div class="prob-meta"><span>Neutral</span><span id="p-neu">0.1%</span></div>
-              <div class="track"><div class="fill fill-neu" id="bar-neu" style="width: 0.1%"></div></div>
-            </div>
-          </div>
+        <div class="reason-banner" id="res-reason">
+          Reason: model_inference
+        </div>
 
-          <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); border-top:1px solid var(--border); padding-top:0.6rem;">
-            <span id="meta-latency">Latency: 1.2 ms</span>
-            <span id="meta-cache">Cache: Miss</span>
+        <!-- ASPECT-BASED SENTIMENT (ABSA) -->
+        <div class="aspects-box">
+          <div class="aspects-title">Aspect-Based Breakdown (ABSA)</div>
+          <div class="aspect-pills" id="res-aspects">
+            <div class="aspect-pill"><div class="aspect-dot" style="background:var(--pos);"></div>UI / UX: POSITIVE</div>
+            <div class="aspect-pill"><div class="aspect-dot" style="background:var(--pos);"></div>PERFORMANCE: POSITIVE</div>
           </div>
+        </div>
+
+        <!-- PROBABILITY METERS -->
+        <div class="meter-group">
+          <div class="meter-row">
+            <div class="meter-label"><span>Positive Probability</span><span id="p-pos">99.8%</span></div>
+            <div class="meter-track"><div class="meter-fill meter-fill-pos" id="bar-pos" style="width: 99.8%;"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Negative Probability</span><span id="p-neg">0.1%</span></div>
+            <div class="meter-track"><div class="meter-fill meter-fill-neg" id="bar-neg" style="width: 0.1%;"></div></div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label"><span>Neutral Probability</span><span id="p-neu">0.1%</span></div>
+            <div class="meter-track"><div class="meter-fill meter-fill-neu" id="bar-neu" style="width: 0.1%;"></div></div>
+          </div>
+        </div>
+
+        <!-- FOOTER TELEMETRY -->
+        <div class="result-meta">
+          <span id="meta-latency">Latency: 1.4 ms</span>
+          <span class="cache-tag" id="meta-cache">⚡ Cache: Evaluated</span>
         </div>
       </div>
     </div>
@@ -197,19 +626,22 @@
   <script>
     const PRESETS = {
       1: { text: "Bro this new update is actually fire, UI is clean af and performance slaps 🔥 no cap", context: "" },
-      2: { text: "Wow, What an Amazing Disaster 💀 They somehow managed to make the app slower, buggier, and more confusing. Absolute cinema. 👏", context: "" },
+      2: { text: "Oh great, my flight got delayed by 6 hours AGAIN 🙃 love spending my birthday in an airport lounge eating stale sandwiches, living my best life fr fr 💀", context: "" },
       3: { text: "Bhai Ye Update Toh OP Hai 😂 Legit bhai, UI ekdum mast hai aur performance bhi smooth hai, developers ne iss baar sach mein cooking ki hai.", context: "" },
       4: { text: "This Game Is Lowkey Cracked 🎮 Movement feels mad smooth, weapons hit different, and matchmaking isn't trolling me anymore. W patch!", context: "" },
-      5: { text: "The new UI looks insanely clean and the animations slap, but half the buttons randomly stop working. Love the vibe, hate the experience.", context: "" },
-      6: { text: "Not gonna lie, this isn't bad at all. I went in expecting another trash update, but they actually fixed most of the annoying stuff.", context: "" },
+      5: { text: "The service was painfully slow and the waiter forgot our order twice, but honestly the biryani was so good I'd still come back fr", context: "" },
+      6: { text: "Not gonna lie, I thought this phone would be mid but ngl it's actually not bad at all, kinda impressed ngl", context: "" },
       7: { text: "They really pulled a Season 8 Game of Thrones on this update", context: "" },
       8: { text: "Brilliant job guys, love to see it 👏", context: "Major database outage affecting all production servers" }
     };
 
     function setPreset(id) {
-      document.getElementById('input-text').value = PRESETS[id].text;
-      document.getElementById('input-context').value = PRESETS[id].context || "";
-      analyzePost();
+      const p = PRESETS[id];
+      if (p) {
+        document.getElementById('input-text').value = p.text;
+        document.getElementById('input-context').value = p.context || "";
+        analyzePost();
+      }
     }
 
     async function analyzePost() {
@@ -217,7 +649,9 @@
       const ctx = document.getElementById('input-context').value.trim();
       if (!text) return;
 
-      document.getElementById('api-status').innerText = 'Analyzing...';
+      const btn = document.getElementById('btn-analyze');
+      btn.innerText = "ANALYZING...";
+      btn.disabled = true;
       const t0 = performance.now();
 
       const payload = ctx
@@ -234,16 +668,17 @@
         const res = data.results[0];
         const elapsed = (performance.now() - t0).toFixed(1);
 
-        document.getElementById('api-status').innerText = `API: Ready (${elapsed} ms)`;
-        document.getElementById('meta-latency').innerText = `Batch Latency: ${data.batch_latency_ms} ms`;
-        document.getElementById('meta-cache').innerText = res.cached ? '⚡ Cache: HIT (0.005ms)' : 'Cache: Evaluated';
+        document.getElementById('meta-latency').innerText = `Batch Latency: ${data.batch_latency_ms} ms (${elapsed} ms round-trip)`;
+        document.getElementById('meta-cache').innerText = res.cached ? '⚡ Cache: HIT (0.069ms)' : 'Cache: Evaluated';
 
         const badge = document.getElementById('res-badge');
         badge.innerText = res.label.toUpperCase();
-        badge.className = `badge badge-${res.label.toLowerCase()}`;
+        badge.className = `sentiment-badge badge-${res.label.toLowerCase()}`;
         document.getElementById('res-conf').innerText = `${(res.confidence * 100).toFixed(1)}%`;
 
-        // Probs
+        document.getElementById('res-reason').innerText = `Reason: ${res.reason || 'model_inference'}`;
+
+        // Probability bars
         const pos = (res.probabilities.positive * 100).toFixed(1);
         const neg = (res.probabilities.negative * 100).toFixed(1);
         const neu = (res.probabilities.neutral * 100).toFixed(1);
@@ -256,26 +691,29 @@
         document.getElementById('bar-neg').style.width = `${neg}%`;
         document.getElementById('bar-neu').style.width = `${neu}%`;
 
-        // Aspects
+        // Aspect Breakdown
         const aspectDiv = document.getElementById('res-aspects');
         aspectDiv.innerHTML = '';
         const aspects = res.aspects || {};
         const aspectKeys = Object.keys(aspects);
 
         if (aspectKeys.length === 0) {
-          aspectDiv.innerHTML = '<span style="font-size:0.8rem; color:var(--text-muted);">No specific product aspects mentioned</span>';
+          aspectDiv.innerHTML = '<span style="font-size:0.78rem; color:var(--text-muted);">No product aspects mentioned in this sample</span>';
         } else {
           aspectKeys.forEach(k => {
             const val = aspects[k];
             const color = val === 'positive' ? 'var(--pos)' : (val === 'negative' ? 'var(--neg)' : 'var(--neu)');
             const pill = document.createElement('div');
             pill.className = 'aspect-pill';
-            pill.innerHTML = `<div class="aspect-dot" style="background:${color}"></div>${k.replace('_', ' ').toUpperCase()}: ${val.toUpperCase()}`;
+            pill.innerHTML = `<div class="aspect-dot" style="background:${color};"></div>${k.toUpperCase()}: ${val.toUpperCase()}`;
             aspectDiv.appendChild(pill);
           });
         }
       } catch (err) {
-        document.getElementById('api-status').innerText = 'Error connecting to API';
+        document.getElementById('res-reason').innerText = 'Error connecting to API server.';
+      } finally {
+        btn.innerText = "ANALYZE SENTIMENT";
+        btn.disabled = false;
       }
     }
 
@@ -285,6 +723,7 @@
         const resp = await fetch('/health');
         const d = await resp.json();
         document.getElementById('val-rss').innerText = `${d.memory_rss_mb} MB`;
+        document.getElementById('header-status').innerText = `Online (${d.uptime_seconds > 0 ? (d.uptime_seconds/60).toFixed(0) + ' min uptime' : 'Ready'})`;
       } catch(e) {}
     }
     loadHealth();
