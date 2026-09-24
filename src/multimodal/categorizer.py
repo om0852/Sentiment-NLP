@@ -19,10 +19,11 @@ class DomainCategorizer:
             },
             "Tech & Software Bugs": {
                 "keywords": [
+                    "technical issue", "technical", "issue", "issues", "problem", "problems", "defect",
                     "crash", "crashed", "crashing", "bug", "bugs", "glitch", "freeze", "hang", "restart",
                     "restarting", "lag", "latency", "memory leak", "timeout", "timed out", "error", "exception",
                     "nullpointer", "stack trace", "watt laga", "band padto", "chalat nahi", "काम नहीं करता",
-                    "अटक", "हँग", "क्रैश", "connection pool", "500 internal", "database"
+                    "अटक", "हँग", "क्रैश", "connection pool", "500 internal", "database", "not working", "failed"
                 ],
                 "weight": 1.4
             },
@@ -69,7 +70,6 @@ class DomainCategorizer:
 
     def classify(self, text: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         if not text:
-            # Default fallback when no text is present
             media_type = (metadata or {}).get("media_type", "image")
             if media_type == "video":
                 return {"category": "Entertainment & Media", "subcategory": "Video Clip", "confidence": 0.50, "matched_keywords": []}
@@ -100,10 +100,8 @@ class DomainCategorizer:
 
         best_cat = max(scores, key=scores.get)
         raw_score = scores[best_cat]
-        # Normalize confidence to 0.70 - 0.99 range
         confidence = min(0.99, round(0.70 + (raw_score * 0.06), 2))
 
-        # Determine subcategory
         subcategories = {
             "Meme / Social Humor": "Viral Internet Meme" if any(x in text_lower for x in ["meme", "cooked", "aura", "ratio"]) else "Humorous Reaction",
             "Tech & Software Bugs": "Crash & Stability" if any(x in text_lower for x in ["crash", "leak", "restart", "500"]) else "Functional Defect",

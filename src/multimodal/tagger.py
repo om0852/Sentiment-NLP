@@ -8,7 +8,8 @@ class SemanticTagger:
     """
     def __init__(self):
         self.domain_tag_rules = [
-            # Bugs & Crash
+            # Bugs & Technical Issues
+            (r"\b(technical\s*issue|technical\s*error|technical\s*problem)\b", "#technical_issue"),
             (r"\b(crash|crashed|crashing|freeze|restart|stuck|hang|हँग|क्रैश)\b", "#app_crash"),
             (r"\b(bug|bugs|glitch|error|exception|stack\s*trace)\b", "#bug_report"),
             (r"\b(memory\s*leak|outage|downtime|timeout|500\s*error|connection\s*pool)\b", "#system_failure"),
@@ -57,7 +58,7 @@ class SemanticTagger:
         tags_set: Set[str] = set()
         text_lower = text.lower()
 
-        # 1. Extract explicit user hashtags already in text (e.g. #PaisaVasool, #Crash)
+        # 1. Extract explicit user hashtags already in text
         raw_hashtags = re.findall(r"#([a-zA-Z0-9_]+)", text)
         for h in raw_hashtags:
             clean_tag = f"#{h.lower()}"
@@ -86,5 +87,5 @@ class SemanticTagger:
                 tags_set.add(tag)
 
         # Format and sort list
-        sorted_tags = sorted(list(tags_set), key=lambda x: (not x.startswith("#app_"), not x.startswith("#meme_"), len(x)))
-        return sorted_tags[:10]  # Cap at top 10 most relevant tags
+        sorted_tags = sorted(list(tags_set), key=lambda x: (not x.startswith("#app_"), not x.startswith("#tech"), not x.startswith("#meme_"), len(x)))
+        return sorted_tags[:10]
