@@ -6,15 +6,17 @@ import tempfile
 from typing import Dict, Any, Optional
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageOps
 except ImportError:
     Image = None
+    ImageOps = None
 
 class OcrEngine:
     """
     Native, zero-external-binary OCR engine utilizing Windows.Media.Ocr on Windows,
     and fallback to Tesseract CLI on Linux / containerized environments.
-    Extracts text from images, memes, receipts, screenshots, and infographics.
+    Includes automated image pre-processing (intelligent upscaling & autocontrast)
+    to maximize OCR fidelity on low-resolution and mobile screenshots.
     """
     def __init__(self, script_path: Optional[str] = None):
         if script_path is None:
@@ -57,13 +59,33 @@ class OcrEngine:
                     "error": f"Image file not found: {target_path}"
                 }
 
-            # 1. Read PIL Metadata if Pillow is available
+            # 1. Image Pre-processing for Optimal OCR Fidelity
+            ocr_image_path = target_path
+            temp_upscaled = None
+
             if Image is not None:
                 try:
                     with Image.open(target_path) as img:
                         img_info["width"], img_info["height"] = img.size
                         img_info["format"] = img.format or "UNKNOWN"
                         img_info["mode"] = img.mode
+
+                        # If image is small or low-DPI (< 1200px width), upscale 2x and enhance contrast
+                        if img.width < 1200 or img.height < 400:
+                            new_w = max(img.width * 2, 800)
+                            new_h = max(img.height * 2, int(800 * (img.height / max(1, img.width))))
+                            enhanced = img.resize((new_w, new_h), Image.Resampling.BICUBIC)
+                            if ImageOps is not None:
+                                try:
+                                    enhanced = ImageOps.autocontrast(enhanced.convert("RGB"))
+                                except Exception:
+                                    pass
+
+                            temp_upscaled = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+                            temp_upscaled_name = temp_upscaled.name
+                            temp_upscaled.close()
+                            enhanced.save(temp_upscaled_name, format="PNG")
+                            ocr_image_path = temp_upscaled_name
                 except Exception:
                     pass
 
@@ -78,7 +100,7 @@ class OcrEngine:
                     "-NoProfile",
                     "-ExecutionPolicy", "Bypass",
                     "-File", self.script_path,
-                    "-ImagePath", target_path
+                    "-ImagePath", ocr_image_path
                 ]
                 proc = subprocess.run(
                     cmd,
@@ -94,7 +116,7 @@ class OcrEngine:
             elif shutil.which("tesseract"):
                 # Linux / Containerized Tesseract CLI if present
                 proc = subprocess.run(
-                    ["tesseract", target_path, "stdout"],
+                    ["tesseract", ocr_image_path, "stdout"],
                     capture_output=True,
                     text=True,
                     encoding="utf-8",
@@ -106,6 +128,13 @@ class OcrEngine:
                     ocr_method = "tesseract_ocr"
             else:
                 ocr_method = "platform_ocr_unavailable"
+
+            # Clean up temporary upscaled file
+            if temp_upscaled and os.path.exists(temp_upscaled.name):
+                try:
+                    os.remove(temp_upscaled.name)
+                except Exception:
+                    pass
 
             has_text = len(extracted_text.strip()) > 0
             return {

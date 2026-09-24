@@ -5,6 +5,7 @@ class DomainCategorizer:
     """
     Intelligent domain and topic categorizer for multimodal text and files.
     Supports English, Hindi, Marathi, Hinglish, and Maranglish.
+    Includes contextual disambiguation for reviews praising performance/UI.
     """
     def __init__(self):
         self.categories = {
@@ -48,7 +49,8 @@ class DomainCategorizer:
                 "keywords": [
                     "review", "rating", "build quality", "battery", "camera", "display", "unboxing", "delivery",
                     "product", "packaging", "worth buying", "recommend", "order", "flipkart", "amazon",
-                    "ek number", "lai bhari", "khup chhan", "chhan", "mast", "badhiya", "घटिया", "खूप छान"
+                    "ek number", "lai bhari", "khup chhan", "chhan", "mast", "badhiya", "घटिया", "खूप छान",
+                    "snappy", "super snappy", "flawless", "smooth", "loved the", "love the", "best app", "chef's kiss"
                 ],
                 "weight": 1.1
             },
@@ -63,7 +65,7 @@ class DomainCategorizer:
                 "keywords": [
                     "press release", "quarterly", "financial statements", "scheduled maintenance", "policy",
                     "official notice", "announcement", "board of directors", "investor relations", "मौसम",
-                    "शासनाने", "नियमावली", "प्रसिद्ध करण्यात"
+                    "शासनाने", "नियमावली", "प्रसिद्ध करण्यात", "post-mortem"
                 ],
                 "weight": 1.3
             }
@@ -106,6 +108,12 @@ class DomainCategorizer:
                 scores[cat] = cat_score
                 matched[cat] = cat_matches
 
+        # Contextual Disambiguation:
+        # If user is praising UI, performance, zero bugs -> Boost Product & E-Commerce Review
+        has_praise = bool(re.search(r"\b(snappy|super snappy|flawless|smooth|loved the|love the|best app|chef's kiss|full paisa vasool|paisa vasool|ek number|10/10|ultra smooth)\b", text_lower))
+        if has_praise:
+            scores["Product & E-Commerce Review"] = scores.get("Product & E-Commerce Review", 0.0) + 3.5
+
         if not scores:
             return {
                 "category": "General Social",
@@ -123,9 +131,9 @@ class DomainCategorizer:
             "Finance & Payment Issue": "UPI & Payment Gateway Failure" if any(x in text_lower for x in ["debit", "failed", "deduct", "cut", "technical issue"]) else "Pricing & Invoice",
             "Tech & Software Bugs": "Crash & Stability" if any(x in text_lower for x in ["crash", "leak", "restart", "500"]) else "Functional Defect",
             "Customer Support & Service": "Escalated Grievance" if any(x in text_lower for x in ["worst", "ghatiya", "rude", "no response"]) else "General Inquiry",
-            "Product & E-Commerce Review": "Positive Endorsement" if any(x in text_lower for x in ["best", "paisa vasool", "recommend", "chhan", "mast"]) else "Critique",
+            "Product & E-Commerce Review": "Positive Endorsement" if any(x in text_lower for x in ["best", "paisa vasool", "recommend", "chhan", "mast", "snappy", "loved"]) else "Critique",
             "Entertainment & Media": "Music & Audio" if "song" in text_lower or "गाणं" in text_lower else "Pop Culture & Gaming",
-            "News & Corporate Announcement": "Official Statement" if "press release" in text_lower or "शासनाने" in text_lower else "General Notice"
+            "News & Corporate Announcement": "Official Statement" if "press release" in text_lower or "शासनाने" in text_lower or "post-mortem" in text_lower else "General Notice"
         }
         subcategory = subcategories.get(best_cat, "General Discussion")
 
@@ -133,5 +141,5 @@ class DomainCategorizer:
             "category": best_cat,
             "subcategory": subcategory,
             "confidence": confidence,
-            "matched_keywords": matched[best_cat]
+            "matched_keywords": matched.get(best_cat, [])
         }
