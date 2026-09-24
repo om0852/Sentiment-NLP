@@ -192,6 +192,59 @@ class ContextAnalyzer:
         ]
         self.advanced_sarcasm_triggers = {"works", "work", "thank", "thanks", "shoutout", "huge props", "congrats", "bravo", "great job", "imagine"}
 
+        # 9b. Indic Sarcasm & Double Meaning Patterns (Hindi, Marathi, Hinglish, Maranglish)
+        self.indic_sarcastic_praise_pat = re.compile(
+            r"(?:वाह\s+क्या|वाह\s+भाई|कमाल\s+है|गजब\s+का|शाब्बास|खूपच\s+हुशार|लय\s+भारी\s+काम|एक\s+नंबर\s+काम|धन्य\s+आहात|मस्त\s+काम|वा\s+रे\s+वा|"
+            r"\bwah\s+kya\b|\bwaah\s+kya\b|\bkamaal\s+hai\b|\bgazab\s+ka\b|\blai\s+bhari\s+kaam\b|\bkhupch\s+hushar\b|\bdhanya\s+ahat\b|\bgreat\s+job\s+(?:bhai|bro|bhava|rao)\b).*"
+            r"(?:क्रैश|हँग|बंद\s+पडतो|पैसे\s+कट|चालत\s+नाही|फोन\s+रीस्टार्ट|उडवला|बग्स\s+दिले|लूट\s+लिया|पैसे\s+वाया|वाट\s+लावली|उघडतच\s+नाही|काम\s+नहीं\s+करता|अटक\s+जाता|"
+            r"\bcrash\b|\bcrashed\b|\brestart\b|\bhang\b|\bstuck\b|\bpaise\s+cut\b|\bpaise\s+fukat\b|\budavla\b|\bband\s+padto\b|\bband\s+padla\b|\bfreeze\b|\bwatt\s+laga\b)",
+            re.IGNORECASE | re.DOTALL
+        )
+        self.indic_backhanded_pat = re.compile(
+            r"(?:दिसण्यात|दिसायला|दिखने\s+में|बाहेरून|पाहिलं\s+तर|look\s+wise|ui\s+wise).*"
+            r"(?:१\s*नंबर|एक\s*नंबर|खूप\s*छान|मस्त|बढ़िया|सुंदर|भारी|pretty|good|clean).*"
+            r"(?:फक्त|पण|परंतु|तरी|लेकिन|मगर|बस|only\s+issue|only\s+problem|bas).*"
+            r"(?:चालत\s+नाही|चालूच\s+होत\s+नाही|काम\s+करत\s+नाही|उघडत\s+नाही|बंद\s+पडतो|काही\s+कामाचा\s+नाही|काम\s+नहीं\s+करता|khul\s+nahi\s+raha|chalta\s+nahi|doesn't\s+work|useless)",
+            re.IGNORECASE | re.DOTALL
+        )
+        self.cynical_conditional_pat = re.compile(
+            r"\b(best|greatest|number\s+one|no\.?\s*1|ek\s+number|top\s+tier|masterpiece)\s+(?:app|game|software|update|service|phone|site|platform|feature)?\s*"
+            r"(?:ever\s+)?(?:if\s+you\s+(?:love|like|enjoy|want)|agar\s+aapko|jar\s+tumhala)\s+.*"
+            r"(?:losing|wasting|burning|crashing|destroying|leaking|freezing|ruining|getting\s+scammed|paise\s+fukat|paise\s+वाया|बर्बाद)\b",
+            re.IGNORECASE
+        )
+        self.indic_faux_gratitude_pat = re.compile(
+            r"(?:(?:धन्यवाद|आभार|शुक्रिया|मेहरबानी|thank\s+you|thanks).*"
+            r"(?:पैसे\s+बुडव|ॲप\s+क्रैश|फोन\s+हँग|डेटा\s+उडव|टाइमपास|वेळ\s+वाया|पैसे\s+खाल्ल|बग\s+दिल|टाइम\s+वेस्ट|लूटने|बर्बाद|खराब|"
+            r"\bfor\s+(?:wasting\s+my\s+time|losing\s+my\s+data|crashing\s+my|bricking\s+my|eating\s+my\s+money)\b))|"
+            r"(?:(?:पैसे\s+बुडव|ॲप\s+क्रैश|फोन\s+हँग|डेटा\s+उडव|टाइमपास|वेळ\s+वाया|पैसे\s+खाल्ल|बग\s+दिल|टाइम\s+वेस्ट|लूटने|बर्बाद|खराब).*"
+            r"(?:धन्यवाद|आभार|शुक्रिया|मेहरबानी|thank\s+you|thanks))",
+            re.IGNORECASE | re.DOTALL
+        )
+        self.indic_rhetorical_pat = re.compile(
+            r"(?:डेव्हलपर(?:्स)?\s+झोपले\s+होते\s+का|अक्कल\s+आहे\s+का|डोके\s+ठिकाणावर\s+आहे\s+का|काय\s+विचार\s+करून\s+(?:हा\s+)?(?:ॲप|अपडेट)|भांग\s+(?:पिऊन|खाऊन)|काही\s+लाज\s+वाटत\s+नाही\s+का|"
+            r"दिमाग\s+बेच\s+दिया\s+क्या|नशे\s+में\s+बनाया\s+है\s+क्या|कौन\s+से\s+नशे\s+किए\s+थे|अक्ल\s+नाम\s+की\s+चीज\s+है\s+या\s+नहीं|"
+            r"\bdevelopers?\s+(?:so\s+rahe\s+the|bhang\s+khake|sleeping\s+on\s+the\s+job)\b)",
+            re.IGNORECASE
+        )
+        self.indic_slang_praise_pat = re.compile(
+            r"(?:एकदम\s+जहर|कतई\s+जहर|बवाल\s+(?:चीज|काम|लुक|ॲप)|कहर\s+ढा\s+दिया|तोड\s+काम|धुरळा\s+उडवला|राडा\s+केला\s+भावाने|खतरनाक\s+(?:ग्राफिक्स|फीचर्स|लुक|काम)|"
+            r"\b(ekdum\s+zeher|katai\s+zeher|bawaal|tod\s+kaam|dhurla\s+udavla|rada\s+kela|khatarnak\s+(?:look|graphics|update))\b)",
+            re.IGNORECASE
+        )
+        self.indic_sarcasm_triggers = {
+            "वाह", "कमाल", "गजब", "शाब्बास", "हुशार", "भारी", "नंबर", "धन्य", "वा रे वा",
+            "wah", "waah", "kamaal", "gazab", "lai bhari", "khupch", "dhanya", "great job",
+            "दिसण्यात", "दिसायला", "दिखने", "बाहेरून", "पाहिलं", "look wise", "ui wise",
+            "best app", "greatest", "number one", "no. 1", "top tier",
+            "धन्यवाद", "आभार", "शुक्रिया", "मेहरबानी", "thank", "thanks",
+            "झोपले", "अक्कल", "डोके", "विचार करून", "भांग", "लाज", "दिमाग", "नशे", "sleeping"
+        }
+        self.indic_slang_praise_triggers = {
+            "जहर", "बवाल", "कहर", "तोड", "धुरळा", "राडा", "खतरनाक",
+            "zeher", "bawaal", "tod", "dhurla", "rada", "khatarnak"
+        }
+
         # 10. Precision & Nuance: Objective News Wires, Betting Tables & Catalog Neutralizer
         self.objective_news_patterns = [
             re.compile(r"\b(cricket\s+betting\s+odds|betting\s+odds|odds\s+by|match\s+winner|upcoming\s+match)\b", re.I),
@@ -372,6 +425,25 @@ class ContextAnalyzer:
             for reason_name, pat in self.advanced_sarcasm_rules:
                 if pat.search(raw_text):
                     return "negative", 0.92, False, reason_name
+
+        # 7b. Indic Sarcasm & Double Meaning Engine (Hindi, Marathi, Hinglish, Maranglish)
+        if any(t in raw_lower for t in self.indic_sarcasm_triggers):
+            if self.indic_sarcastic_praise_pat.search(raw_text):
+                return "negative", 0.93, False, "indic_sarcastic_praise"
+            if self.indic_backhanded_pat.search(raw_text):
+                return "negative", 0.90, False, "indic_backhanded_compliment"
+            if self.cynical_conditional_pat.search(raw_text):
+                return "negative", 0.92, False, "cynical_conditional_irony"
+            if self.indic_faux_gratitude_pat.search(raw_text):
+                return "negative", 0.92, False, "indic_faux_gratitude"
+            if self.indic_rhetorical_pat.search(raw_text):
+                return "negative", 0.92, False, "indic_rhetorical_mockery"
+
+        # 7c. Indic Polysemous Youth Slang Inversion
+        if any(t in raw_lower for t in self.indic_slang_praise_triggers):
+            if self.indic_slang_praise_pat.search(raw_text):
+                if not any(fw in raw_lower for fw in ["क्रैश", "crash", "बग", "bug", "हँग", "hang", "slow", "स्लो"]):
+                    return "positive", 0.92, False, "indic_slang_inversion_praise"
 
         # 8. Slang Inversions & Contronyms
         if any(t in raw_lower for t in self.slang_praise_triggers):

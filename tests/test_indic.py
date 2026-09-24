@@ -109,3 +109,34 @@ def test_indic_aspect_based_sentiment(client):
     assert "performance" in item["aspects"]
     assert item["aspects"]["performance"] == "negative"
     assert item["is_mixed"] is True
+
+def test_indic_double_meaning_and_sarcasm(client):
+    payload = {
+        "texts": [
+            "Wah kya update diya hai, app khulte hi phone restart ho gaya!",
+            "लय भारी काम केलं राव, पैसे कट झाले पण तिकीट मिळालंच नाही!",
+            "दिसण्यात १ नंबर आहे, फक्त चालत नाही एवढंच.",
+            "Best app ever if you love losing your money 💀",
+            "पैसे बुडवल्याबद्दल मनापासून धन्यवाद!",
+            "डेव्हलपर्स झोपले होते का हा अपडेट देताना?",
+            "गाणं एकदम जहर आहे भावा!"
+        ]
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    results = response.json()["results"]
+
+    # 1. Sarcastic praise -> negative
+    assert results[0]["label"] == "negative"
+    # 2. Marathi Sarcastic praise -> negative
+    assert results[1]["label"] == "negative"
+    # 3. Backhanded compliment -> negative
+    assert results[2]["label"] == "negative"
+    # 4. Cynical conditional irony -> negative
+    assert results[3]["label"] == "negative"
+    # 5. Faux gratitude -> negative
+    assert results[4]["label"] == "negative"
+    # 6. Rhetorical mockery -> negative
+    assert results[5]["label"] == "negative"
+    # 7. Slang inversion praise -> positive
+    assert results[6]["label"] == "positive"
