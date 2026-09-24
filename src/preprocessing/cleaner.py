@@ -1,5 +1,6 @@
 import re
 import html
+import unicodedata
 from typing import Tuple
 
 class TextCleaner:
@@ -14,6 +15,8 @@ class TextCleaner:
         self.repeated_char_pattern = re.compile(r"(.)\1{2,}")
         # Match multiple whitespace
         self.whitespace_pattern = re.compile(r"\s+")
+        # Match hashtags for splitting
+        self.hashtag_pattern = re.compile(r"#([A-Za-z0-9_]+)")
         # Sarcasm markers
         self.sarcasm_markers = [
             re.compile(r"(?:^|\s)/s(?:\s|$|[.,!?])", re.IGNORECASE),
@@ -43,17 +46,29 @@ class TextCleaner:
         if not text or not isinstance(text, str):
             return "", False
 
-        # Fast unescape only if '&' is present
-        cleaned = html.unescape(text) if "&" in text else text
+        # 1. NFKD Unicode normalizer for fancy/mathematical fonts (𝕓𝕒𝕕 -> bad, 𝗕𝗘𝗦𝗧 -> BEST)
+        cleaned = unicodedata.normalize("NFKD", text) if any(ord(c) > 127 for c in text) else text
+
+        # 2. Fast unescape only if '&' is present
+        if "&" in cleaned:
+            cleaned = html.unescape(cleaned)
 
         # Check for sarcasm indicators before stripping
         has_sarcasm = self.detect_sarcasm_marker(cleaned)
 
-        # Remove HTML tags if present
+        # 3. Split CamelCase & underscored hashtags (#WorstServiceEver -> worst service ever)
+        if "#" in cleaned:
+            def split_tag(m):
+                t = m.group(1)
+                split_words = re.sub(r"([a-z])([A-Z])", r"\1 \2", t).replace("_", " ")
+                return " " + split_words.lower() + " "
+            cleaned = self.hashtag_pattern.sub(split_tag, cleaned)
+
+        # 4. Remove HTML tags if present
         if "<" in cleaned:
             cleaned = self.html_tag_pattern.sub(" ", cleaned)
 
-        # Remove URLs if present
+        # 5. Remove URLs if present
         if "http" in cleaned or "www." in cleaned:
             cleaned = self.url_pattern.sub(" ", cleaned)
 

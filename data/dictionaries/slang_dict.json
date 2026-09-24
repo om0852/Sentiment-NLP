@@ -397,9 +397,9 @@
   },
   "jhakaas": {
     "polarity": "positive",
-    "weight": 2.0,
-    "replacement": "superb fantastic",
-    "category": "hinglish"
+    "weight": 2.2,
+    "replacement": "fantastic outstanding wonderful",
+    "category": "praise"
   },
   "paisa vasool": {
     "polarity": "positive",
@@ -409,9 +409,9 @@
   },
   "paisa wasool": {
     "polarity": "positive",
-    "weight": 2.3,
-    "replacement": "complete value for money worth every penny",
-    "category": "hinglish"
+    "weight": 2.2,
+    "replacement": "worth every penny valuable",
+    "category": "praise"
   },
   "jugaad": {
     "polarity": "positive",
@@ -433,9 +433,9 @@
   },
   "we are cooked": {
     "polarity": "negative",
-    "weight": -2.2,
-    "replacement": "we are ruined doomed finished badly",
-    "category": "failure"
+    "weight": 2.2,
+    "replacement": "completely ruined doomed disaster",
+    "category": "doom"
   },
   "we're cooked": {
     "polarity": "negative",
@@ -475,9 +475,9 @@
   },
   "crashed out": {
     "polarity": "negative",
-    "weight": -2.2,
-    "replacement": "lost temper rage outburst disaster",
-    "category": "distress"
+    "weight": 2.0,
+    "replacement": "extreme breakdown meltdown",
+    "category": "rage"
   },
   "loot liya": {
     "polarity": "negative",
@@ -487,8 +487,8 @@
   },
   "dimaag kharab": {
     "polarity": "negative",
-    "weight": -2.2,
-    "replacement": "infuriating terrible headache frustrated",
+    "weight": -2.3,
+    "replacement": "extremely frustrating headache annoying",
     "category": "hinglish"
   },
   "dimag kharab": {
@@ -607,9 +607,9 @@
   },
   "ratio": {
     "polarity": "negative",
-    "weight": -1.5,
-    "replacement": "publicly disapproved rejected",
-    "category": "social"
+    "weight": 1.6,
+    "replacement": "community rejection public loss",
+    "category": "rejection"
   },
   "ratioed": {
     "polarity": "negative",
@@ -795,7 +795,7 @@
     "polarity": "neutral",
     "weight": 0.0,
     "replacement": "to be honest",
-    "category": "hedging"
+    "category": "general"
   },
   "idk": {
     "polarity": "neutral",
@@ -825,7 +825,7 @@
     "polarity": "neutral",
     "weight": 0.0,
     "replacement": "in my opinion",
-    "category": "hedging"
+    "category": "general"
   },
   "imho": {
     "polarity": "neutral",
@@ -857,88 +857,472 @@
     "replacement": "mood assessment",
     "category": "social"
   },
-  "lai bhari": {
+  "bro thought he cooked": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "embarrassing failure delusion",
+    "category": "mockery"
+  },
+  "who let him cook": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "terrible mistake disaster",
+    "category": "mockery"
+  },
+  "never let bro cook": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "embarrassing failure disaster",
+    "category": "mockery"
+  },
+  "never let him cook": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "terrible failure disaster",
+    "category": "mockery"
+  },
+  "aura -1000": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "huge humiliation loss of respect",
+    "category": "humiliation"
+  },
+  "aura -10000": {
+    "polarity": "negative",
+    "weight": 2.4,
+    "replacement": "massive embarrassment loss of respect",
+    "category": "humiliation"
+  },
+  "-1000 aura": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "huge humiliation loss of respect",
+    "category": "humiliation"
+  },
+  "-10000 aura": {
+    "polarity": "negative",
+    "weight": 2.4,
+    "replacement": "massive embarrassment loss of respect",
+    "category": "humiliation"
+  },
+  "lost aura": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "embarrassed humiliated lost respect",
+    "category": "humiliation"
+  },
+  "aura +1000": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "immense respect greatness win",
+    "category": "praise"
+  },
+  "aura +10000": {
     "polarity": "positive",
     "weight": 2.4,
-    "replacement": "awesome wonderful superb",
-    "category": "marathi"
+    "replacement": "supreme respect greatness victory",
+    "category": "praise"
+  },
+  "+1000 aura": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "immense respect greatness win",
+    "category": "praise"
+  },
+  "infinite aura": {
+    "polarity": "positive",
+    "weight": 2.5,
+    "replacement": "supreme unmatched greatness win",
+    "category": "praise"
+  },
+  "skill issue": {
+    "polarity": "negative",
+    "weight": 1.8,
+    "replacement": "incompetence product failure defect",
+    "category": "mockery"
+  },
+  "ratiod": {
+    "polarity": "negative",
+    "weight": 1.8,
+    "replacement": "overwhelmingly rejected defeated",
+    "category": "rejection"
+  },
+  "ratio'd": {
+    "polarity": "negative",
+    "weight": 1.8,
+    "replacement": "overwhelmingly rejected defeated",
+    "category": "rejection"
+  },
+  "crashout": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "extreme mental breakdown rage",
+    "category": "rage"
+  },
+  "i am cooked": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "completely ruined doomed",
+    "category": "doom"
+  },
+  "app is cooked": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "app is completely broken ruined",
+    "category": "defect"
+  },
+  "demure": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "aesthetic clean mindful perfection",
+    "category": "style"
+  },
+  "very demure": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "extremely aesthetic clean mindful",
+    "category": "style"
+  },
+  "bro really said": {
+    "polarity": "negative",
+    "weight": 1.5,
+    "replacement": "ridiculous nonsense statement",
+    "category": "mockery"
+  },
+  "bro really thought": {
+    "polarity": "negative",
+    "weight": 1.6,
+    "replacement": "embarrassing delusion failure",
+    "category": "mockery"
+  },
+  "nah bro this ain't it": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "completely unacceptable terrible",
+    "category": "rejection"
+  },
+  "this ain't it": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "completely unacceptable terrible",
+    "category": "rejection"
+  },
+  "l update": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "terrible update catastrophic failure",
+    "category": "defect"
+  },
+  "common l": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "frequent failure consistent disappointment",
+    "category": "mockery"
+  },
+  "w update": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "amazing update massive win",
+    "category": "success"
+  },
+  "common w": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "consistent greatness excellent success",
+    "category": "praise"
+  },
+  "peak": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "pinnacle perfection masterpiece",
+    "category": "praise"
+  },
+  "peak fiction": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "masterpiece pinnacle perfection",
+    "category": "praise"
+  },
+  "gr8": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "great excellent",
+    "category": "approval"
+  },
+  "h8": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "hate despise",
+    "category": "disapproval"
+  },
+  "w8": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "wait",
+    "category": "general"
+  },
+  "b4": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "before",
+    "category": "general"
+  },
+  "fr fr": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "for real truly genuine",
+    "category": "authenticity"
+  },
+  "ong": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "on god truly genuine",
+    "category": "authenticity"
+  },
+  "smh": {
+    "polarity": "negative",
+    "weight": 1.6,
+    "replacement": "shaking my head disappointed",
+    "category": "disappointment"
+  },
+  "badiya": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "excellent wonderful great",
+    "category": "praise"
+  },
+  "badhiyaa": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "excellent wonderful great",
+    "category": "praise"
+  },
+  "badeeya": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "excellent wonderful great",
+    "category": "praise"
+  },
+  "bdya": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "excellent wonderful great",
+    "category": "praise"
+  },
+  "chaan": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "very nice beautiful great",
+    "category": "praise"
+  },
+  "chann": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "very nice beautiful great",
+    "category": "praise"
+  },
+  "chhaan": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "very nice beautiful great",
+    "category": "praise"
+  },
+  "bakwaas": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "terrible useless garbage",
+    "category": "disapproval"
+  },
+  "bkwas": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "terrible useless garbage",
+    "category": "disapproval"
+  },
+  "baqwas": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "terrible useless garbage",
+    "category": "disapproval"
+  },
+  "phukat": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "waste of money useless",
+    "category": "disapproval"
+  },
+  "fukatt": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "waste of money useless",
+    "category": "disapproval"
+  },
+  "bhaari": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "awesome exceptional great",
+    "category": "praise"
+  },
+  "bhariii": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "awesome exceptional great",
+    "category": "praise"
+  },
+  "lay bhaari": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "extremely awesome great",
+    "category": "praise"
+  },
+  "bekaar": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "useless broken bad",
+    "category": "disapproval"
+  },
+  "bkar": {
+    "polarity": "negative",
+    "weight": 2.0,
+    "replacement": "useless broken bad",
+    "category": "disapproval"
+  },
+  "ghatiyaa": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "horrible worst low quality",
+    "category": "disapproval"
+  },
+  "ghtiya": {
+    "polarity": "negative",
+    "weight": 2.2,
+    "replacement": "horrible worst low quality",
+    "category": "disapproval"
+  },
+  "zhakas": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "fantastic outstanding wonderful",
+    "category": "praise"
+  },
+  "jhakkas": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "fantastic outstanding wonderful",
+    "category": "praise"
+  },
+  "paisa vasul": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "worth every penny valuable",
+    "category": "praise"
+  },
+  "dhurlaa": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "mindblowing dominant victory",
+    "category": "praise"
+  },
+  "dhurlla": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "mindblowing dominant victory",
+    "category": "praise"
+  },
+  "nadch khula": {
+    "polarity": "positive",
+    "weight": 2.4,
+    "replacement": "unmatched supreme masterpiece",
+    "category": "praise"
+  },
+  "lai bhari": {
+    "polarity": "positive",
+    "weight": 2.3,
+    "replacement": "extremely awesome exceptional great",
+    "category": "maranglish"
+  },
+  "lai bhaari": {
+    "polarity": "positive",
+    "weight": 2.3,
+    "replacement": "extremely awesome exceptional great",
+    "category": "maranglish"
   },
   "lay bhari": {
     "polarity": "positive",
-    "weight": 2.4,
-    "replacement": "awesome wonderful superb",
-    "category": "marathi"
+    "weight": 2.3,
+    "replacement": "extremely awesome exceptional great",
+    "category": "maranglish"
+  },
+  "bhari": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "awesome great impressive",
+    "category": "maranglish"
+  },
+  "chhan": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "very nice beautiful great",
+    "category": "maranglish"
   },
   "khup chhan": {
     "polarity": "positive",
     "weight": 2.3,
-    "replacement": "very good fantastic wonderful",
-    "category": "marathi"
+    "replacement": "very beautiful wonderful great",
+    "category": "maranglish"
   },
   "ek number": {
     "polarity": "positive",
-    "weight": 2.4,
-    "replacement": "first class brilliant superb",
-    "category": "marathi"
+    "weight": 2.3,
+    "replacement": "top tier best incredible fantastic",
+    "category": "hinglish"
   },
-  "kadak": {
+  "1 number": {
+    "polarity": "positive",
+    "weight": 2.3,
+    "replacement": "top tier best incredible fantastic",
+    "category": "hinglish"
+  },
+  "ek no": {
     "polarity": "positive",
     "weight": 2.0,
-    "replacement": "sharp solid fire awesome",
-    "category": "marathi"
+    "replacement": "top tier best incredible",
+    "category": "hinglish"
   },
-  "bhari ahe": {
+  "ek no.": {
     "polarity": "positive",
-    "weight": 2.1,
-    "replacement": "awesome great solid",
-    "category": "marathi"
+    "weight": 2.0,
+    "replacement": "top tier best incredible",
+    "category": "hinglish"
+  },
+  "bhava": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "bro brother friend",
+    "category": "maranglish"
+  },
+  "bhaiya": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "bro brother friend",
+    "category": "hinglish"
   },
   "paise fukat": {
     "polarity": "negative",
-    "weight": -2.4,
-    "replacement": "waste of money scam useless",
-    "category": "marathi"
+    "weight": -2.3,
+    "replacement": "money wasted loss useless",
+    "category": "maranglish"
   },
-  "paise vaya": {
+  "paise barbad": {
     "polarity": "negative",
-    "weight": -2.4,
-    "replacement": "waste of money scam ruined",
-    "category": "marathi"
+    "weight": -2.3,
+    "replacement": "money wasted loss ruined",
+    "category": "hinglish"
   },
   "kahi upyog nahi": {
     "polarity": "negative",
     "weight": -2.3,
-    "replacement": "completely useless unhelpful",
-    "category": "marathi"
-  },
-  "band padto": {
-    "polarity": "negative",
-    "weight": -2.4,
-    "replacement": "crashes freezes broken",
-    "category": "marathi"
-  },
-  "chalat nahi": {
-    "polarity": "negative",
-    "weight": -2.2,
-    "replacement": "not working broken fails",
-    "category": "marathi"
-  },
-  "doke dukhi": {
-    "polarity": "negative",
-    "weight": -2.0,
-    "replacement": "headache frustrating annoying",
-    "category": "marathi"
-  },
-  "doke tapla": {
-    "polarity": "negative",
-    "weight": -2.2,
-    "replacement": "infuriating frustrated angry",
-    "category": "marathi"
-  },
-  "faltu": {
-    "polarity": "negative",
-    "weight": -2.2,
-    "replacement": "useless rubbish trash",
-    "category": "marathi"
+    "replacement": "completely useless no purpose",
+    "category": "maranglish"
   }
 }

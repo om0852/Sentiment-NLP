@@ -390,6 +390,35 @@ class ContextAnalyzer:
                 if has_praise:
                     return "positive", 0.92, False, "context_aligned_praise"
 
+        # 0a. Single-Word / Standalone Reaction Replies (W, L, Ratio, Cooked, Peak, Mid, Based, Cap, Real)
+        clean_stripped = re.sub(r"^[#@\s]+|[.!?,\s💀🔥👏🏆]+$", "", raw_lower).strip()
+        if clean_stripped in {"w", "peak", "fire", "based", "nocap", "real"}:
+            return "positive", 0.95, False, "single_word_reaction_praise"
+        elif clean_stripped in {"l", "ratio", "ratiod", "cap", "cooked", "mid", "trash"}:
+            return "negative", 0.95, False, "single_word_reaction_criticism"
+
+        # 0b. 2026 Meme & Brainrot Templates
+        if "cook" in raw_lower:
+            if re.search(r"\b(bro\s+thought\s+he\s+cooked|who\s+let\s+(?:him|them|bro)\s+cook|never\s+let\s+(?:him|them|bro)\s+cook)\b", raw_lower):
+                return "negative", 0.95, False, "meme_mockery_cooked"
+            elif re.search(r"\b(let\s+(?:him|them|bro)\s+cook|(?:he|they|bro|devs)\s+cooked)\b", raw_lower):
+                return "positive", 0.93, False, "meme_praise_cooked"
+
+        if "aura" in raw_lower:
+            if re.search(r"(?:aura\s*-\s*\d+|-\s*\d+\s*aura|lost\s+aura|minus\s+aura)", raw_lower):
+                return "negative", 0.95, False, "meme_loss_of_aura"
+            elif re.search(r"(?:aura\s*\+\s*\d+|\+\s*\d+\s*aura|infinite\s+aura)", raw_lower):
+                return "positive", 0.95, False, "meme_gain_of_aura"
+
+        if "skill issue" in raw_lower:
+            return "negative", 0.93, False, "meme_skill_issue"
+
+        if "ain't it" in raw_lower or "aint it" in raw_lower:
+            return "negative", 0.93, False, "meme_this_aint_it"
+
+        if "demure" in raw_lower:
+            return "positive", 0.92, False, "meme_demure_aesthetic"
+
         # 1. Reverse Bait-and-Switch (Expectation of disaster -> turned into triumph)
         if self.reverse_bait_and_switch.search(raw_lower):
             return "positive", 0.92, False, "reverse_bait_and_switch_detected"
