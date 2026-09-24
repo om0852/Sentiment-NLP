@@ -17,6 +17,15 @@ class DomainCategorizer:
                 ],
                 "weight": 1.2
             },
+            "Finance & Payment Issue": {
+                "keywords": [
+                    "payment", "payment failed", "transaction failed", "money debited", "refund", "transaction",
+                    "deducted", "paise cut", "paise fukat", "paise doob", "billing", "invoice", "receipt",
+                    "overcharged", "subscription", "bank", "wallet", "upi", "card", "paisa vasool",
+                    "पैसे कट", "लूट लिया", "बुडवले", "scam", "confirm payment", "upi pin", "bank server"
+                ],
+                "weight": 1.4
+            },
             "Tech & Software Bugs": {
                 "keywords": [
                     "technical issue", "technical", "issue", "issues", "problem", "problems", "defect",
@@ -25,15 +34,7 @@ class DomainCategorizer:
                     "nullpointer", "stack trace", "watt laga", "band padto", "chalat nahi", "काम नहीं करता",
                     "अटक", "हँग", "क्रैश", "connection pool", "500 internal", "database", "not working", "failed"
                 ],
-                "weight": 1.4
-            },
-            "Finance & Billing": {
-                "keywords": [
-                    "money debited", "payment failed", "refund", "transaction", "deducted", "paise cut",
-                    "paise fukat", "paise doob", "billing", "invoice", "receipt", "overcharged", "subscription",
-                    "bank", "wallet", "upi", "card", "paisa vasool", "पैसे कट", "लूट लिया", "बुडवले", "scam"
-                ],
-                "weight": 1.3
+                "weight": 1.2
             },
             "Customer Support & Service": {
                 "keywords": [
@@ -69,13 +70,28 @@ class DomainCategorizer:
         }
 
     def classify(self, text: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
-        if not text:
-            media_type = (metadata or {}).get("media_type", "image")
+        text_lower = (text or "").lower()
+        meta = metadata or {}
+        
+        # 1. Specialized Visual Signature Override: Payment App Failure UI
+        is_payment_ui = meta.get("is_payment_ui", False)
+        if is_payment_ui and any(x in text_lower for x in ["technical issue", "failed", "support", "try again", "payment", "bank", "request"]):
+            gateway_name = meta.get("detected_gateway") or "UPI Gateway"
+            return {
+                "category": "Finance & Payment Issue",
+                "subcategory": f"Payment Failure ({gateway_name})",
+                "confidence": 0.98,
+                "matched_keywords": ["payment_app_theme", "technical_issue_modal"]
+            }
+
+        if not text_lower:
+            media_type = meta.get("media_type", "image")
+            if is_payment_ui:
+                return {"category": "Finance & Payment Issue", "subcategory": "Payment Application Screen", "confidence": 0.90, "matched_keywords": ["payment_theme"]}
             if media_type == "video":
                 return {"category": "Entertainment & Media", "subcategory": "Video Clip", "confidence": 0.50, "matched_keywords": []}
             return {"category": "General Social", "subcategory": "Visual Media", "confidence": 0.50, "matched_keywords": []}
 
-        text_lower = text.lower()
         scores: Dict[str, float] = {}
         matched: Dict[str, List[str]] = {}
 
@@ -104,8 +120,8 @@ class DomainCategorizer:
 
         subcategories = {
             "Meme / Social Humor": "Viral Internet Meme" if any(x in text_lower for x in ["meme", "cooked", "aura", "ratio"]) else "Humorous Reaction",
+            "Finance & Payment Issue": "UPI & Payment Gateway Failure" if any(x in text_lower for x in ["debit", "failed", "deduct", "cut", "technical issue"]) else "Pricing & Invoice",
             "Tech & Software Bugs": "Crash & Stability" if any(x in text_lower for x in ["crash", "leak", "restart", "500"]) else "Functional Defect",
-            "Finance & Billing": "Payment Dispute" if any(x in text_lower for x in ["debit", "failed", "deduct", "cut"]) else "Pricing & Invoice",
             "Customer Support & Service": "Escalated Grievance" if any(x in text_lower for x in ["worst", "ghatiya", "rude", "no response"]) else "General Inquiry",
             "Product & E-Commerce Review": "Positive Endorsement" if any(x in text_lower for x in ["best", "paisa vasool", "recommend", "chhan", "mast"]) else "Critique",
             "Entertainment & Media": "Music & Audio" if "song" in text_lower or "गाणं" in text_lower else "Pop Culture & Gaming",

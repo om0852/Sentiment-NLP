@@ -8,8 +8,14 @@ class SemanticTagger:
     """
     def __init__(self):
         self.domain_tag_rules = [
-            # Bugs & Technical Issues
+            # Finance & Payment Failure
+            (r"\b(payment\s*failed|payment\s*issue|transaction\s*failed|money\s*debited|paise\s*cut|पैसे\s*कट)\b", "#payment_failed"),
+            (r"\b(refund|debited|deducted|payment|transaction|upi|bank\s*server)\b", "#payment_issue"),
             (r"\b(technical\s*issue|technical\s*error|technical\s*problem)\b", "#technical_issue"),
+            (r"\b(paisa\s*vasool|worth\s*every\s*penny|value\s*for\s*money)\b", "#value_for_money"),
+            (r"\b(paise\s*fukat|paise\s*barbad|waste\s*of\s*money|scam|fraud)\b", "#money_wasted"),
+            
+            # Bugs & Crashes
             (r"\b(crash|crashed|crashing|freeze|restart|stuck|hang|हँग|क्रैश)\b", "#app_crash"),
             (r"\b(bug|bugs|glitch|error|exception|stack\s*trace)\b", "#bug_report"),
             (r"\b(memory\s*leak|outage|downtime|timeout|500\s*error|connection\s*pool)\b", "#system_failure"),
@@ -22,11 +28,6 @@ class SemanticTagger:
             # Customer Service & Grievance
             (r"\b(customer\s*support|support\s*team|helpdesk|call\s*center|agent|executive)\b", "#customer_support"),
             (r"\b(worst\s*service|ghatiya|rude|no\s*response|ignored|ticket)\b", "#support_grievance"),
-            
-            # Finance & Billing
-            (r"\b(refund|debited|deducted|payment\s*failed|money\s*lost|paise\s*cut|पैसे\s*कट)\b", "#payment_issue"),
-            (r"\b(paisa\s*vasool|worth\s*every\s*penny|value\s*for\s*money)\b", "#value_for_money"),
-            (r"\b(paise\s*fukat|paise\s*barbad|waste\s*of\s*money|scam|fraud)\b", "#money_wasted"),
             
             # Memes & Viral Slang
             (r"\b(cooked|who\s*let\s*him\s*cook|bro\s*cooked|never\s*cook)\b", "#meme_cooked"),
@@ -46,31 +47,41 @@ class SemanticTagger:
             "hai", "ki", "ko", "ka", "ke", "me", "ahe", "aahe", "nahi", "hota", "hote", "tar", "pan", "ani", "app"
         }
 
-    def extract_tags(self, text: str, category: str = "", sentiment_label: str = "") -> List[str]:
-        if not text:
-            default_tags = []
-            if category:
-                default_tags.append(f"#{category.lower().split()[0].replace('/', '')}")
-            if sentiment_label:
-                default_tags.append(f"#{sentiment_label}")
-            return default_tags
-
+    def extract_tags(self, text: str, category: str = "", sentiment_label: str = "", metadata: Dict[str, Any] = None) -> List[str]:
         tags_set: Set[str] = set()
-        text_lower = text.lower()
+        text_lower = (text or "").lower()
+        meta = metadata or {}
 
-        # 1. Extract explicit user hashtags already in text
+        # 1. Payment UI tags
+        if meta.get("is_payment_ui") or "Payment" in category:
+            tags_set.add("#payment_issue")
+            tags_set.add("#upi_failure")
+            gateway = meta.get("detected_gateway") or ""
+            if "PhonePe" in gateway:
+                tags_set.add("#phonepe")
+            elif "Paytm" in gateway:
+                tags_set.add("#paytm")
+
+        if not text_lower:
+            if category:
+                tags_set.add(f"#{category.lower().split()[0].replace('/', '')}")
+            if sentiment_label:
+                tags_set.add(f"#{sentiment_label}")
+            return sorted(list(tags_set))
+
+        # 2. Extract explicit user hashtags already in text
         raw_hashtags = re.findall(r"#([a-zA-Z0-9_]+)", text)
         for h in raw_hashtags:
             clean_tag = f"#{h.lower()}"
             if len(clean_tag) > 2:
                 tags_set.add(clean_tag)
 
-        # 2. Extract Domain Rule Tags
+        # 3. Extract Domain Rule Tags
         for pattern, tag in self.domain_tag_rules:
             if re.search(pattern, text_lower):
                 tags_set.add(tag)
 
-        # 3. Add Category and Sentiment Context Tags
+        # 4. Add Category and Sentiment Context Tags
         if category:
             cat_slug = re.sub(r"[^a-zA-Z0-9]", "_", category.lower()).strip("_")
             cat_tag = f"#{cat_slug.split('_')[0]}"
@@ -79,7 +90,7 @@ class SemanticTagger:
         if sentiment_label:
             tags_set.add(f"#{sentiment_label}")
 
-        # 4. Extract Top Significant Keywords as Tags (length >= 4)
+        # 5. Extract Top Significant Keywords as Tags (length >= 4)
         words = re.findall(r"\b[a-zA-Z]{4,}\b", text_lower)
         for w in words:
             if w not in self.stopwords and len(tags_set) < 8:
@@ -87,5 +98,5 @@ class SemanticTagger:
                 tags_set.add(tag)
 
         # Format and sort list
-        sorted_tags = sorted(list(tags_set), key=lambda x: (not x.startswith("#app_"), not x.startswith("#tech"), not x.startswith("#meme_"), len(x)))
+        sorted_tags = sorted(list(tags_set), key=lambda x: (not x.startswith("#payment_"), not x.startswith("#upi_"), not x.startswith("#app_"), len(x)))
         return sorted_tags[:10]

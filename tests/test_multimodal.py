@@ -74,11 +74,11 @@ def test_domain_categorizer_and_tagger_direct():
     assert cat_res["category"] == "Meme / Social Humor"
     assert any("meme" in t or "aura" in t for t in tags)
 
-    # 2. Finance
+    # 2. Finance & Payment
     finance_text = "Transaction failed, money debited but ticket not booked! Fraud bank service."
     cat_res = categorizer.classify(finance_text)
     tags = tagger.extract_tags(finance_text, category=cat_res["category"], sentiment_label="negative")
-    assert cat_res["category"] == "Finance & Billing"
+    assert cat_res["category"] == "Finance & Payment Issue"
     assert any("payment" in t or "money" in t or "finance" in t for t in tags)
 
     # 3. Product review
@@ -96,3 +96,15 @@ def test_multimodal_pipeline_direct():
     assert res["sentiment"]["confidence"] >= 0.80
     assert isinstance(res["tags"], list)
     assert res["latency_ms"] >= 0.0
+
+def test_payment_failure_ui_detection():
+    # Test that payment UI modal with technical issue is recognized as Finance & Payment Issue
+    categorizer = DomainCategorizer()
+    tagger = SemanticTagger()
+    meta = {"is_payment_ui": True, "detected_gateway": "PhonePe / UPI Theme"}
+    cat_res = categorizer.classify("Technical Issue", metadata=meta)
+    tags = tagger.extract_tags("Technical Issue", category=cat_res["category"], sentiment_label="negative", metadata=meta)
+    
+    assert cat_res["category"] == "Finance & Payment Issue"
+    assert "Payment Failure" in cat_res["subcategory"]
+    assert any("payment" in t or "upi" in t or "phonepe" in t for t in tags)

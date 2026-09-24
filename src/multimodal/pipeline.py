@@ -60,7 +60,7 @@ class MultimodalPipeline:
         ext = os.path.splitext(filename)[1].lower().lstrip(".")
 
         extracted_text = ""
-        media_metadata = {}
+        media_metadata = {"media_type": media_type}
         has_text = False
 
         # --- 1. MEDIA EXTRACTION ---
@@ -70,7 +70,7 @@ class MultimodalPipeline:
             has_text = bool(extracted_text)
             media_metadata.update(ocr_res.get("metadata", {}))
             
-            # Extract visual cues
+            # Extract visual cues & payment gateway brand signatures
             visual_cues = self.vision_analyzer.analyze_visual_scene(file_input)
             media_metadata.update(visual_cues)
 
@@ -134,13 +134,14 @@ class MultimodalPipeline:
         }
 
         # --- 3. DOMAIN CATEGORIZATION ---
-        cat_result = self.categorizer.classify(extracted_text, metadata={"media_type": media_type})
+        cat_result = self.categorizer.classify(extracted_text, metadata=media_metadata)
 
         # --- 4. SEMANTIC TAGGING ---
         tags = self.tagger.extract_tags(
             extracted_text,
             category=cat_result["category"],
-            sentiment_label=final_label
+            sentiment_label=final_label,
+            metadata=media_metadata
         )
 
         latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
