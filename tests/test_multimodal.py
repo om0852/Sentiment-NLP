@@ -1,9 +1,10 @@
 import io
+import os
 import pytest
 from PIL import Image, ImageDraw
 from starlette.testclient import TestClient
 from src.serving.app import app
-from src.multimodal import MultimodalPipeline, DomainCategorizer, SemanticTagger
+from src.multimodal import MultimodalPipeline, DomainCategorizer, SemanticTagger, AudioTranscriber, VideoProcessor
 
 @pytest.fixture(scope="module")
 def client():
@@ -98,7 +99,6 @@ def test_multimodal_pipeline_direct():
     assert res["latency_ms"] >= 0.0
 
 def test_payment_failure_ui_detection():
-    # Test that payment UI modal with technical issue is recognized as Finance & Payment Issue
     categorizer = DomainCategorizer()
     tagger = SemanticTagger()
     meta = {"is_payment_ui": True, "detected_gateway": "PhonePe / UPI Theme"}
@@ -108,3 +108,15 @@ def test_payment_failure_ui_detection():
     assert cat_res["category"] == "Finance & Payment Issue"
     assert "Payment Failure" in cat_res["subcategory"]
     assert any("payment" in t or "upi" in t or "phonepe" in t for t in tags)
+
+def test_video_audio_and_speech_processor():
+    transcriber = AudioTranscriber()
+    processor = VideoProcessor(audio_transcriber=transcriber)
+    
+    assert transcriber.ffmpeg_bin is not None
+    assert os.path.exists(transcriber.ffmpeg_bin)
+    
+    # Verify non-existent file handling
+    res = transcriber.process_video_speech_and_captions("non_existent_video.mp4")
+    assert res["has_speech"] is False
+    assert res["subtitles"] == ""
