@@ -9,7 +9,7 @@ try:
     import psutil
 except Exception:
     psutil = None
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
@@ -17,6 +17,7 @@ from src.models import PureSentimentClassifier, TfidfSentimentClassifier, TFIDFC
 from src.preprocessing.pipeline import PreprocessingPipeline
 from src.preprocessing.context_analyzer import ContextAnalyzer
 from src.preprocessing.aspect_extractor import AspectExtractor
+from src.multimodal import MultimodalPipeline
 from src.serving.cache import SentimentLRUCache
 from src.serving.active_learning import ActiveLearningQueue, ActiveLearningBuffer
 from src.serving.fallback import FallbackService
@@ -26,7 +27,9 @@ from src.serving.schemas import (
     SentimentPredictionItem,
     PostInput,
     HealthResponse,
-    MetricsResponse
+    MetricsResponse,
+    MultimodalAnalysisResponse,
+    MultimodalSentiment
 )
 
 # Global runtime state
@@ -48,7 +51,7 @@ fallback_service: Optional[FallbackService] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model, pipeline, context_analyzer, aspect_extractor, cache, active_learning, fallback_service
+    global model, pipeline, context_analyzer, aspect_extractor, cache, active_learning, fallback_service, multimodal_pipeline
     print("Initializing sentiment engine runtime...")
     
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -56,6 +59,7 @@ async def lifespan(app: FastAPI):
     pipeline = PreprocessingPipeline()
     context_analyzer = ContextAnalyzer()
     aspect_extractor = AspectExtractor()
+    multimodal_pipeline = MultimodalPipeline()
     cache = SentimentLRUCache(max_size=10000)
     
     active_learning_path = os.path.join(project_root, "data", "feedback_queue.jsonl")
@@ -345,6 +349,58 @@ async def predict_sentiment(req: SentimentPredictRequest):
         batch_latency_ms=round(batch_latency, 3),
         model_version="tfidf-context-absa-v4"
     )
+
+
+@app.post("/analyze/file", response_model=MultimodalAnalysisResponse)
+async def analyze_file(file: UploadFile = File(...)):
+    """
+    Universal Multimodal Analyzer: Ingests any file (Image, Video, PDF, DOCX, CSV, TXT, JSON)
+    and returns Sentiment, Domain Category, Semantic Tags, Extracted Text, and Media Metadata.
+    """
+    if not multimodal_pipeline:
+        raise HTTPException(status_code=503, detail="Multimodal pipeline not initialized")
+    try:
+        content = await file.read()
+        res = multimodal_pipeline.analyze(content, filename=file.filename or "file", mime_type=file.content_type or "")
+        return MultimodalAnalysisResponse(**res)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze file: {str(e)}")
+
+@app.post("/analyze/image", response_model=MultimodalAnalysisResponse)
+async def analyze_image(file: UploadFile = File(...)):
+    """Dedicated Image and Meme Analyzer with Native OCR and Visual Cues."""
+    if not multimodal_pipeline:
+        raise HTTPException(status_code=503, detail="Multimodal pipeline not initialized")
+    try:
+        content = await file.read()
+        res = multimodal_pipeline.analyze(content, filename=file.filename or "image.png", mime_type=file.content_type or "image/png")
+        return MultimodalAnalysisResponse(**res)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze image: {str(e)}")
+
+@app.post("/analyze/video", response_model=MultimodalAnalysisResponse)
+async def analyze_video(file: UploadFile = File(...)):
+    """Dedicated Video Analyzer with Keyframe Sampling and On-screen Subtitle OCR."""
+    if not multimodal_pipeline:
+        raise HTTPException(status_code=503, detail="Multimodal pipeline not initialized")
+    try:
+        content = await file.read()
+        res = multimodal_pipeline.analyze(content, filename=file.filename or "video.mp4", mime_type=file.content_type or "video/mp4")
+        return MultimodalAnalysisResponse(**res)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze video: {str(e)}")
+
+@app.post("/analyze/document", response_model=MultimodalAnalysisResponse)
+async def analyze_document(file: UploadFile = File(...)):
+    """Dedicated Document Analyzer (PDF, Word DOCX, TXT, CSV)."""
+    if not multimodal_pipeline:
+        raise HTTPException(status_code=503, detail="Multimodal pipeline not initialized")
+    try:
+        content = await file.read()
+        res = multimodal_pipeline.analyze(content, filename=file.filename or "document.pdf", mime_type=file.content_type or "application/pdf")
+        return MultimodalAnalysisResponse(**res)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze document: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard():

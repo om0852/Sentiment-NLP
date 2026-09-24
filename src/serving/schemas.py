@@ -50,3 +50,24 @@ class MetricsResponse(BaseModel):
     avg_latency_ms: float
     cache_stats: Dict[str, Any]
     active_learning_queued: int
+
+class MultimodalSentiment(BaseModel):
+    label: str
+    confidence: float
+    probabilities: Dict[str, float]
+    reason: Optional[str] = None
+    aspects: Dict[str, str] = Field(default_factory=dict)
+
+class MultimodalAnalysisResponse(BaseModel):
+    filename: str
+    media_type: str
+    file_format: str
+    sentiment: MultimodalSentiment
+    category: str
+    subcategory: str
+    category_confidence: float
+    tags: List[str]
+    extracted_text: str
+    has_text: bool
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    latency_ms: float
