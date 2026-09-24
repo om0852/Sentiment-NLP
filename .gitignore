@@ -25,3 +25,4 @@ data/processed/
 
 # Logs
 *.log
+!models/sentiment_model.json.gz

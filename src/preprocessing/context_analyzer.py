@@ -154,10 +154,12 @@ class ContextAnalyzer:
             re.compile(r"\bcan't\s+say\s+i'm\s+unhappy\b", re.I),
             re.compile(r"\bdidn't\s+leave\s+any\s+loose\s+ends\b", re.I),
             re.compile(r"\bnot\s+a\s+dumpster\s+fire\b", re.I),
+            re.compile(r"(?:बग|बग्स|समस्या|त्रुटी)\s+.*(?:मिटले|नाहीत|नाही|दूर\s+झाले)"),
         ]
         self.litotes_triggers = {
             "not", "no", "cannot", "can't", "isn't", "didn't", "hardly",
-            "far from", "failed to", "nothing", "by no means"
+            "far from", "failed to", "nothing", "by no means",
+            "बग", "बग्स", "समस्या", "त्रुटी", "मिटले"
         }
 
         # 7. Reverse Bait-and-Switch (Expectation of disaster -> turned into triumph)
@@ -229,7 +231,7 @@ class ContextAnalyzer:
         )
         self.indic_slang_praise_pat = re.compile(
             r"(?:एकदम\s+जहर|कतई\s+जहर|बवाल\s+(?:चीज|काम|लुक|ॲप)|कहर\s+ढा\s+दिया|तोड\s+काम|धुरळा\s+उडवला|राडा\s+केला\s+भावाने|खतरनाक\s+(?:ग्राफिक्स|फीचर्स|लुक|काम)|"
-            r"\b(ekdum\s+zeher|katai\s+zeher|bawaal|tod\s+kaam|dhurla\s+udavla|rada\s+kela|khatarnak\s+(?:look|graphics|update))\b)",
+            r"\b(ekdum\s+zeher|katai\s+zeher|bawaal|tod\s+kaam|dhurla\s+udavla|rada\s+kela|khatarnak\s+(?:look|graphics|update)|bahut\s+hi\s+badhiya|badi\s+badhiya|maza\s+aa\s+gaya|mazaa\s+aa\s+gaya|zabardast\s+app)\b)",
             re.IGNORECASE
         )
         self.indic_sarcasm_triggers = {
@@ -242,7 +244,8 @@ class ContextAnalyzer:
         }
         self.indic_slang_praise_triggers = {
             "जहर", "बवाल", "कहर", "तोड", "धुरळा", "राडा", "खतरनाक",
-            "zeher", "bawaal", "tod", "dhurla", "rada", "khatarnak"
+            "zeher", "bawaal", "tod", "dhurla", "rada", "khatarnak",
+            "badhiya", "badiya", "maza aa gaya", "maza", "zabardast", "bahut hi badhiya"
         }
 
         # 10. Precision & Nuance: Objective News Wires, Betting Tables & Catalog Neutralizer
@@ -251,6 +254,7 @@ class ContextAnalyzer:
             re.compile(r"(?:on\s+X:\s*&quot;|\s*\|\s*Social\s+Samosa|\s*-\s*LinkedIn\b|\s*-\s*Reuters\b|\s*-\s*Bloomberg\b|\s*-\s*City\s+AM\b|\s*-\s*MSN\b|\s*-\s*K99\b)", re.I),
             re.compile(r"\b(press\s+photo|market\s+overview|closing\s+bell|quarterly\s+earnings\s+call\s+scheduled|round-up\s+for)\b", re.I),
             re.compile(r"\b(specifications?|hard-cover\s+books?|in\s+stock\s+now|free\s+shipping\s+on\s+orders\s+over|available\s+in\s+sizes)\b", re.I),
+            re.compile(r"(?:शासनाने|मंत्रालयाने|सरकारने|विभागाने|जाहीर\s+केली|घोषणा\s+केली|नियमावली|प्रेस\s+नोट)"),
         ]
         self.first_person_emotive_pattern = re.compile(
             r"\b(i\s+(?:love|hate|adore|despise|switched|regret|loathe|cannot\s+stand)|"
@@ -258,7 +262,10 @@ class ContextAnalyzer:
             r"worst\s+experience|best\s+thing\s+ever|complete\s+garbage|absolute\s+fire|full\s+paisa\s+vasool)\b",
             re.I
         )
-        self.objective_triggers = {"betting odds", "match winner", "on x:", "social samosa", "- linkedin", "- reuters", "- bloomberg", "- city am", "- msn", "- k99", "press photo", "market overview", "specifications", "in stock"}
+        self.objective_triggers = {
+            "betting odds", "match winner", "on x:", "social samosa", "- linkedin", "- reuters", "- bloomberg", "- city am", "- msn", "- k99", "press photo", "market overview", "specifications", "in stock",
+            "शासनाने", "मंत्रालयाने", "सरकारने", "विभागाने", "जाहीर केली", "नियमावली"
+        }
 
         # 11. Contrastive Conjunctions & ABSA
         self.contrastive_conjunctions = re.compile(
@@ -458,6 +465,14 @@ class ContextAnalyzer:
         # 9. Multi-Clause Contrast & ABSA -> Mixed (CHECKED BEFORE single cultural tropes to avoid clashing)
         if self._check_contrastive_mixed(raw_text, aspects=aspects):
             return "mixed", 0.90, False, "contrastive_clause_mixed"
+
+        # 9b. Unanimous ABSA resolution when base model is neutral or uncertain
+        if aspects and (base_label.lower() == "neutral" or base_confidence < 0.60):
+            aspect_vals = set(aspects.values())
+            if "negative" in aspect_vals and "positive" not in aspect_vals:
+                return "negative", 0.88, False, "unanimous_negative_aspects"
+            elif "positive" in aspect_vals and "negative" not in aspect_vals:
+                return "positive", 0.88, False, "unanimous_positive_aspects"
 
         # 10. Cultural Disasters & Triumphs
         for trope in self.cultural_disasters:

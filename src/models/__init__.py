@@ -1,4 +1,4 @@
 from .base import BaseSentimentClassifier
-from .tfidf_classifier import TfidfSentimentClassifier, TFIDFClassifier
+from .pure_tfidf import PureSentimentClassifier, TfidfSentimentClassifier, TFIDFClassifier
 
-__all__ = ["BaseSentimentClassifier", "TfidfSentimentClassifier", "TFIDFClassifier"]
+__all__ = ['BaseSentimentClassifier', 'PureSentimentClassifier', 'TfidfSentimentClassifier', 'TFIDFClassifier']

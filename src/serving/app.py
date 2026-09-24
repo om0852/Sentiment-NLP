@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
-from src.models.tfidf_classifier import TfidfSentimentClassifier, TFIDFClassifier
+from src.models import PureSentimentClassifier, TfidfSentimentClassifier, TFIDFClassifier
 from src.preprocessing.pipeline import PreprocessingPipeline
 from src.preprocessing.context_analyzer import ContextAnalyzer
 from src.preprocessing.aspect_extractor import AspectExtractor
@@ -52,8 +52,6 @@ async def lifespan(app: FastAPI):
     print("Initializing sentiment engine runtime...")
     
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    model_path = os.path.join(project_root, "models", "sentiment_model.joblib")
-    
     # Initialize pipeline
     pipeline = PreprocessingPipeline()
     context_analyzer = ContextAnalyzer()
@@ -65,13 +63,25 @@ async def lifespan(app: FastAPI):
     
     fallback_service = FallbackService(api_url=os.getenv("FALLBACK_API_URL", "https://api.jev.ai/v1/sentiment"))
     
-    # Load model
-    if os.path.exists(model_path):
+    # Load multilingual pure python model or fallback
+    model_gz = os.path.join(project_root, "models", "sentiment_model.json.gz")
+    model_json = os.path.join(project_root, "models", "sentiment_model.json")
+    model_joblib = os.path.join(project_root, "models", "sentiment_model.joblib")
+    
+    if os.path.exists(model_gz):
+        model = PureSentimentClassifier()
+        model.load(model_gz)
+        print(f"Multilingual Sentiment model successfully loaded from {model_gz}")
+    elif os.path.exists(model_json):
+        model = PureSentimentClassifier()
+        model.load(model_json)
+        print(f"Multilingual Sentiment model successfully loaded from {model_json}")
+    elif os.path.exists(model_joblib):
         model = TfidfSentimentClassifier()
-        model.load(model_path)
-        print(f"Sentiment model successfully loaded from {model_path}")
+        model.load(model_joblib)
+        print(f"Sentiment model successfully loaded from {model_joblib}")
     else:
-        print(f"WARNING: Model not found at {model_path}. Predictions will fail until trained.")
+        print(f"WARNING: Model not found at {model_gz}. Predictions will fail until trained.")
         
     yield
     print("Shutting down sentiment engine runtime...")

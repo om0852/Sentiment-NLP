@@ -73,6 +73,7 @@ NEGATIVE_SIGNALS = {
     "nightmare", "unbearable", "bloatware", "infested", "throttling", "overheating",
     "drains", "erroneously", "predatory", "crippled", "clunky", "unoptimized",
     "mediocre", "dull", "cash grab", "dial-up", "unforgivable", "corrupted",
+    "crashed", "crashing", "leak", "leaks", "leaked", "critical",
     # Marathi & Hindi colloquialisms
     "paise fukat", "paise vaya", "kahi upyog nahi", "band padto", "chalat nahi", "doke dukhi", "faltu", "bakwas",
     # Devanagari negative
