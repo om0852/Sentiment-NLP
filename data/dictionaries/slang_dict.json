@@ -1,150 +1,944 @@
 {
-  "lit": {"polarity": "positive", "weight": 1.8, "replacement": "extremely great", "category": "approval"},
-  "fire": {"polarity": "positive", "weight": 2.0, "replacement": "amazing awesome", "category": "approval"},
-  "goated": {"polarity": "positive", "weight": 2.2, "replacement": "greatest exceptional", "category": "praise"},
-  "goat": {"polarity": "positive", "weight": 2.0, "replacement": "greatest best", "category": "praise"},
-  "banger": {"polarity": "positive", "weight": 1.9, "replacement": "masterpiece hit", "category": "praise"},
-  "slaps": {"polarity": "positive", "weight": 1.8, "replacement": "sounds amazing", "category": "approval"},
-  "bussing": {"polarity": "positive", "weight": 1.8, "replacement": "delicious fantastic", "category": "approval"},
-  "bussin": {"polarity": "positive", "weight": 1.8, "replacement": "delicious fantastic", "category": "approval"},
-  "no cap": {"polarity": "positive", "weight": 1.5, "replacement": "genuinely truly great", "category": "authenticity"},
-  "nocap": {"polarity": "positive", "weight": 1.5, "replacement": "genuinely truly great", "category": "authenticity"},
-  "rizz": {"polarity": "positive", "weight": 1.4, "replacement": "charm appeal", "category": "social"},
-  "based": {"polarity": "positive", "weight": 1.6, "replacement": "authentic admirable", "category": "approval"},
-  "wholesome": {"polarity": "positive", "weight": 1.7, "replacement": "heartwarming wonderful", "category": "emotion"},
-  "valid": {"polarity": "positive", "weight": 1.4, "replacement": "legitimate agreeable", "category": "approval"},
-  "w": {"polarity": "positive", "weight": 1.5, "replacement": "win victory", "category": "success"},
-  "huge w": {"polarity": "positive", "weight": 2.2, "replacement": "massive win success", "category": "success"},
-  "massive w": {"polarity": "positive", "weight": 2.2, "replacement": "massive win success", "category": "success"},
-  "dev w": {"polarity": "positive", "weight": 2.0, "replacement": "developer win success", "category": "success"},
-  "rare dev w": {"polarity": "positive", "weight": 2.2, "replacement": "rare developer win victory", "category": "success"},
-  "chef kiss": {"polarity": "positive", "weight": 2.0, "replacement": "perfection excellent", "category": "praise"},
-  "chefs kiss": {"polarity": "positive", "weight": 2.0, "replacement": "perfection excellent", "category": "praise"},
-  "chef’s kiss": {"polarity": "positive", "weight": 2.0, "replacement": "perfection excellent", "category": "praise"},
-  "immaculate": {"polarity": "positive", "weight": 2.0, "replacement": "flawless perfect", "category": "praise"},
-  "savage": {"polarity": "positive", "weight": 1.4, "replacement": "bold impressive", "category": "praise"},
-  "snatched": {"polarity": "positive", "weight": 1.5, "replacement": "looks stunning", "category": "compliment"},
-  "sheesh": {"polarity": "positive", "weight": 1.3, "replacement": "impressive wow", "category": "surprise"},
-  "ate and left no crumbs": {"polarity": "positive", "weight": 2.3, "replacement": "performed flawlessly outstanding", "category": "praise"},
-  "ate": {"polarity": "positive", "weight": 1.6, "replacement": "performed exceptionally", "category": "praise"},
-  "slay": {"polarity": "positive", "weight": 1.8, "replacement": "dominated excelled", "category": "praise"},
-  "slayed": {"polarity": "positive", "weight": 1.8, "replacement": "dominated excelled", "category": "praise"},
-  "stan": {"polarity": "positive", "weight": 1.4, "replacement": "devoted fan admire", "category": "fandom"},
-  "hype": {"polarity": "positive", "weight": 1.5, "replacement": "excitement anticipated", "category": "excitement"},
-  "hyped": {"polarity": "positive", "weight": 1.6, "replacement": "super excited", "category": "excitement"},
-  "legend": {"polarity": "positive", "weight": 1.9, "replacement": "iconic remarkable", "category": "praise"},
-  "legendary": {"polarity": "positive", "weight": 2.0, "replacement": "exceptional historic", "category": "praise"},
-  "clean": {"polarity": "positive", "weight": 1.4, "replacement": "sleek well done", "category": "style"},
-  "clean af": {"polarity": "positive", "weight": 2.0, "replacement": "extremely sleek and well designed", "category": "style"},
-  "smooth": {"polarity": "positive", "weight": 1.3, "replacement": "effortless great", "category": "style"},
-  "gem": {"polarity": "positive", "weight": 1.8, "replacement": "valuable rare find", "category": "praise"},
-  "elite": {"polarity": "positive", "weight": 2.0, "replacement": "top tier superior", "category": "praise"},
-  "top tier": {"polarity": "positive", "weight": 2.0, "replacement": "highest quality best", "category": "praise"},
-  "underrated": {"polarity": "positive", "weight": 1.5, "replacement": "deserves more praise", "category": "praise"},
-  "stunning": {"polarity": "positive", "weight": 2.0, "replacement": "gorgeous magnificent", "category": "compliment"},
-  "breathtaking": {"polarity": "positive", "weight": 2.1, "replacement": "extraordinary remarkable", "category": "praise"},
-  "masterpiece": {"polarity": "positive", "weight": 2.4, "replacement": "perfection work of art", "category": "praise"},
-  "god tier": {"polarity": "positive", "weight": 2.5, "replacement": "unmatched supreme", "category": "praise"},
-  "locked in": {"polarity": "positive", "weight": 1.9, "replacement": "deeply focused dedicated high quality", "category": "praise"},
-  "stand on business": {"polarity": "positive", "weight": 1.9, "replacement": "accountable reliable stood firm", "category": "praise"},
-  "standing on business": {"polarity": "positive", "weight": 1.9, "replacement": "accountable reliable stood firm", "category": "praise"},
-
-  "they cooked": {"polarity": "positive", "weight": 2.2, "replacement": "performed amazingly created masterpiece", "category": "praise"},
-  "he cooked": {"polarity": "positive", "weight": 2.2, "replacement": "performed amazingly created masterpiece", "category": "praise"},
-  "she cooked": {"polarity": "positive", "weight": 2.2, "replacement": "performed amazingly created masterpiece", "category": "praise"},
-  "bro cooked": {"polarity": "positive", "weight": 2.2, "replacement": "performed amazingly created masterpiece", "category": "praise"},
-  "devs cooked": {"polarity": "positive", "weight": 2.2, "replacement": "performed amazingly created masterpiece", "category": "praise"},
-  "cooked fr": {"polarity": "positive", "weight": 2.0, "replacement": "performed exceptionally truly great", "category": "praise"},
-  "let him cook": {"polarity": "positive", "weight": 1.8, "replacement": "allow him to excel and impress", "category": "praise"},
-  "let them cook": {"polarity": "positive", "weight": 1.8, "replacement": "allow them to excel and impress", "category": "praise"},
-  "cooking ki hai": {"polarity": "positive", "weight": 2.0, "replacement": "created something incredible", "category": "praise"},
-  "we take those": {"polarity": "positive", "weight": 1.6, "replacement": "we happily accept that win", "category": "satisfaction"},
-  "didn't completely fumble": {"polarity": "positive", "weight": 1.5, "replacement": "succeeded avoided mistake", "category": "relief"},
-  "didn't fumble": {"polarity": "positive", "weight": 1.5, "replacement": "succeeded avoided mistake", "category": "relief"},
-  "cracked": {"polarity": "positive", "weight": 1.8, "replacement": "insanely good skilled", "category": "gaming"},
-  "op": {"polarity": "positive", "weight": 1.8, "replacement": "overpowered top tier great", "category": "gaming"},
-  "ekdum mast": {"polarity": "positive", "weight": 2.2, "replacement": "absolutely fantastic wonderful", "category": "hinglish"},
-  "mast": {"polarity": "positive", "weight": 1.8, "replacement": "fantastic great", "category": "hinglish"},
-  "bawaal": {"polarity": "positive", "weight": 2.0, "replacement": "sensational awesome", "category": "hinglish"},
-  "jhakaas": {"polarity": "positive", "weight": 2.0, "replacement": "superb fantastic", "category": "hinglish"},
-  "paisa vasool": {"polarity": "positive", "weight": 2.3, "replacement": "complete value for money worth every penny", "category": "hinglish"},
-  "paisa wasool": {"polarity": "positive", "weight": 2.3, "replacement": "complete value for money worth every penny", "category": "hinglish"},
-  "jugaad": {"polarity": "positive", "weight": 1.6, "replacement": "clever innovative smart solution", "category": "hinglish"},
-  "goes hard": {"polarity": "positive", "weight": 1.8, "replacement": "extremely impressive good", "category": "slang"},
-  "hits different": {"polarity": "positive", "weight": 1.7, "replacement": "unique special enjoyable", "category": "slang"},
-
-  "we are cooked": {"polarity": "negative", "weight": -2.2, "replacement": "we are ruined doomed finished badly", "category": "failure"},
-  "we're cooked": {"polarity": "negative", "weight": -2.2, "replacement": "we are ruined doomed finished badly", "category": "failure"},
-  "i'm cooked": {"polarity": "negative", "weight": -2.2, "replacement": "i am ruined doomed finished badly", "category": "failure"},
-  "bro is cooked": {"polarity": "negative", "weight": -2.2, "replacement": "he is ruined doomed finished badly", "category": "failure"},
-  "is cooked": {"polarity": "negative", "weight": -2.0, "replacement": "is ruined doomed finished badly", "category": "failure"},
-  "cooked": {"polarity": "negative", "weight": -1.4, "replacement": "ruined doomed", "category": "failure"},
-
-  "crash out": {"polarity": "negative", "weight": -2.2, "replacement": "lost temper rage outburst disaster", "category": "distress"},
-  "crashed out": {"polarity": "negative", "weight": -2.2, "replacement": "lost temper rage outburst disaster", "category": "distress"},
-  "loot liya": {"polarity": "negative", "weight": -2.4, "replacement": "robbed ripped off cheated extortion", "category": "hinglish"},
-  "dimaag kharab": {"polarity": "negative", "weight": -2.2, "replacement": "infuriating terrible headache frustrated", "category": "hinglish"},
-  "dimag kharab": {"polarity": "negative", "weight": -2.2, "replacement": "infuriating terrible headache frustrated", "category": "hinglish"},
-  "chindi": {"polarity": "negative", "weight": -1.8, "replacement": "cheap substandard stingy", "category": "hinglish"},
-  "khatam": {"polarity": "negative", "weight": -2.0, "replacement": "finished ruined destroyed dead", "category": "hinglish"},
-  "tata bye bye": {"polarity": "negative", "weight": -2.0, "replacement": "finished ruined destroyed dead", "category": "hinglish"},
-  "chomu": {"polarity": "negative", "weight": -1.8, "replacement": "foolish incompetent clown", "category": "hinglish"},
-  "watt laga di": {"polarity": "negative", "weight": -2.3, "replacement": "completely destroyed broken ruined", "category": "hinglish"},
-
-  "sus": {"polarity": "negative", "weight": -1.6, "replacement": "suspicious sketchy untrustworthy", "category": "distrust"},
-  "cap": {"polarity": "negative", "weight": -1.5, "replacement": "lie falsehood deceptive", "category": "deception"},
-  "mid": {"polarity": "negative", "weight": -1.6, "replacement": "mediocre subpar unimpressive", "category": "critique"},
-  "trash": {"polarity": "negative", "weight": -2.2, "replacement": "worthless garbage terrible", "category": "insult"},
-  "garbage": {"polarity": "negative", "weight": -2.1, "replacement": "terrible substandard", "category": "critique"},
-  "cringe": {"polarity": "negative", "weight": -1.8, "replacement": "embarrassing awkward", "category": "disgust"},
-  "cringey": {"polarity": "negative", "weight": -1.7, "replacement": "embarrassing awkward", "category": "disgust"},
-  "delulu": {"polarity": "negative", "weight": -1.4, "replacement": "delusional unrealistic", "category": "critique"},
-  "flop": {"polarity": "negative", "weight": -1.9, "replacement": "total failure disaster", "category": "failure"},
-  "flopped": {"polarity": "negative", "weight": -1.9, "replacement": "failed completely", "category": "failure"},
-  "l": {"polarity": "negative", "weight": -1.5, "replacement": "loss failure embarrassment", "category": "failure"},
-  "huge l": {"polarity": "negative", "weight": -2.3, "replacement": "massive defeat disaster", "category": "failure"},
-  "massive l": {"polarity": "negative", "weight": -2.3, "replacement": "massive defeat disaster", "category": "failure"},
-  "ratio": {"polarity": "negative", "weight": -1.5, "replacement": "publicly disapproved rejected", "category": "social"},
-  "ratioed": {"polarity": "negative", "weight": -1.6, "replacement": "overwhelmingly downvoted", "category": "social"},
-  "ick": {"polarity": "negative", "weight": -1.8, "replacement": "sudden disgust turnoff", "category": "disgust"},
-  "salty": {"polarity": "negative", "weight": -1.4, "replacement": "bitter resentful", "category": "emotion"},
-  "scam": {"polarity": "negative", "weight": -2.4, "replacement": "fraud dishonest rip off", "category": "deception"},
-  "scammed": {"polarity": "negative", "weight": -2.5, "replacement": "defrauded cheated", "category": "deception"},
-  "clown": {"polarity": "negative", "weight": -1.7, "replacement": "foolish ridiculous", "category": "mockery"},
-  "bogus": {"polarity": "negative", "weight": -1.6, "replacement": "fake illegitimate", "category": "critique"},
-  "down bad": {"polarity": "negative", "weight": -1.5, "replacement": "desperate miserable", "category": "distress"},
-  "npc": {"polarity": "negative", "weight": -1.4, "replacement": "mindless unoriginal", "category": "insult"},
-  "touch grass": {"polarity": "negative", "weight": -1.5, "replacement": "unrealistic out of touch", "category": "insult"},
-  "unhinged": {"polarity": "negative", "weight": -1.4, "replacement": "erratic crazy bizarre", "category": "behavior"},
-  "overrated": {"polarity": "negative", "weight": -1.7, "replacement": "hyped without merit inferior", "category": "critique"},
-  "dead wrong": {"polarity": "negative", "weight": -1.8, "replacement": "completely incorrect", "category": "error"},
-  "rip off": {"polarity": "negative", "weight": -2.2, "replacement": "overpriced scam exploitation", "category": "commerce"},
-  "ripoff": {"polarity": "negative", "weight": -2.2, "replacement": "overpriced scam exploitation", "category": "commerce"},
-  "washed": {"polarity": "negative", "weight": -1.7, "replacement": "past prime declined useless", "category": "critique"},
-  "fell off": {"polarity": "negative", "weight": -1.8, "replacement": "declined in quality ruined", "category": "critique"},
-  "brick": {"polarity": "negative", "weight": -1.6, "replacement": "useless broken failure", "category": "failure"},
-  "bricked": {"polarity": "negative", "weight": -2.0, "replacement": "completely broken destroyed", "category": "failure"},
-  "buggy": {"polarity": "negative", "weight": -1.6, "replacement": "glitchy defective", "category": "defect"},
-  "broken": {"polarity": "negative", "weight": -1.9, "replacement": "nonfunctional defective", "category": "defect"},
-  "dog water": {"polarity": "negative", "weight": -2.2, "replacement": "extremely terrible trash", "category": "insult"},
-  "dogshit": {"polarity": "negative", "weight": -2.5, "replacement": "awful garbage", "category": "insult"},
-  "bakwas": {"polarity": "negative", "weight": -2.2, "replacement": "worthless garbage terrible", "category": "hinglish"},
-  "ghatiya": {"polarity": "negative", "weight": -2.2, "replacement": "substandard terrible", "category": "hinglish"},
-  "fumble": {"polarity": "negative", "weight": -1.5, "replacement": "mistake blunder error", "category": "failure"},
-  "fumbled": {"polarity": "negative", "weight": -1.8, "replacement": "ruined blunder failure", "category": "failure"},
-
-  "fr": {"polarity": "neutral", "weight": 0.0, "replacement": "genuinely for real", "category": "emphasis"},
-  "frfr": {"polarity": "neutral", "weight": 0.0, "replacement": "genuinely for real", "category": "emphasis"},
-  "ngl": {"polarity": "neutral", "weight": 0.0, "replacement": "not going to lie honestly", "category": "hedging"},
-  "tbh": {"polarity": "neutral", "weight": 0.0, "replacement": "to be honest", "category": "hedging"},
-  "idk": {"polarity": "neutral", "weight": 0.0, "replacement": "i do not know", "category": "uncertainty"},
-  "lowkey": {"polarity": "neutral", "weight": 0.0, "replacement": "somewhat slightly", "category": "modifier"},
-  "highkey": {"polarity": "neutral", "weight": 0.0, "replacement": "very prominently", "category": "modifier"},
-  "iykyk": {"polarity": "neutral", "weight": 0.0, "replacement": "if you know you know", "category": "insider"},
-  "imo": {"polarity": "neutral", "weight": 0.0, "replacement": "in my opinion", "category": "hedging"},
-  "imho": {"polarity": "neutral", "weight": 0.0, "replacement": "in my humble opinion", "category": "hedging"},
-  "fyi": {"polarity": "neutral", "weight": 0.0, "replacement": "for your information", "category": "informational"},
-  "btw": {"polarity": "neutral", "weight": 0.0, "replacement": "by the way", "category": "transition"},
-  "tea": {"polarity": "neutral", "weight": 0.0, "replacement": "gossip information", "category": "topic"},
-  "vibe check": {"polarity": "neutral", "weight": 0.0, "replacement": "mood assessment", "category": "social"}
+  "lit": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "extremely great",
+    "category": "approval"
+  },
+  "fire": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "amazing awesome",
+    "category": "approval"
+  },
+  "goated": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "greatest exceptional",
+    "category": "praise"
+  },
+  "goat": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "greatest best",
+    "category": "praise"
+  },
+  "banger": {
+    "polarity": "positive",
+    "weight": 1.9,
+    "replacement": "masterpiece hit",
+    "category": "praise"
+  },
+  "slaps": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "sounds amazing",
+    "category": "approval"
+  },
+  "bussing": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "delicious fantastic",
+    "category": "approval"
+  },
+  "bussin": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "delicious fantastic",
+    "category": "approval"
+  },
+  "no cap": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "genuinely truly great",
+    "category": "authenticity"
+  },
+  "nocap": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "genuinely truly great",
+    "category": "authenticity"
+  },
+  "rizz": {
+    "polarity": "positive",
+    "weight": 1.4,
+    "replacement": "charm appeal",
+    "category": "social"
+  },
+  "based": {
+    "polarity": "positive",
+    "weight": 1.6,
+    "replacement": "authentic admirable",
+    "category": "approval"
+  },
+  "wholesome": {
+    "polarity": "positive",
+    "weight": 1.7,
+    "replacement": "heartwarming wonderful",
+    "category": "emotion"
+  },
+  "valid": {
+    "polarity": "positive",
+    "weight": 1.4,
+    "replacement": "legitimate agreeable",
+    "category": "approval"
+  },
+  "w": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "win victory",
+    "category": "success"
+  },
+  "huge w": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "massive win success",
+    "category": "success"
+  },
+  "massive w": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "massive win success",
+    "category": "success"
+  },
+  "dev w": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "developer win success",
+    "category": "success"
+  },
+  "rare dev w": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "rare developer win victory",
+    "category": "success"
+  },
+  "chef kiss": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "perfection excellent",
+    "category": "praise"
+  },
+  "chefs kiss": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "perfection excellent",
+    "category": "praise"
+  },
+  "chef’s kiss": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "perfection excellent",
+    "category": "praise"
+  },
+  "immaculate": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "flawless perfect",
+    "category": "praise"
+  },
+  "savage": {
+    "polarity": "positive",
+    "weight": 1.4,
+    "replacement": "bold impressive",
+    "category": "praise"
+  },
+  "snatched": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "looks stunning",
+    "category": "compliment"
+  },
+  "sheesh": {
+    "polarity": "positive",
+    "weight": 1.3,
+    "replacement": "impressive wow",
+    "category": "surprise"
+  },
+  "ate and left no crumbs": {
+    "polarity": "positive",
+    "weight": 2.3,
+    "replacement": "performed flawlessly outstanding",
+    "category": "praise"
+  },
+  "ate": {
+    "polarity": "positive",
+    "weight": 1.6,
+    "replacement": "performed exceptionally",
+    "category": "praise"
+  },
+  "slay": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "dominated excelled",
+    "category": "praise"
+  },
+  "slayed": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "dominated excelled",
+    "category": "praise"
+  },
+  "stan": {
+    "polarity": "positive",
+    "weight": 1.4,
+    "replacement": "devoted fan admire",
+    "category": "fandom"
+  },
+  "hype": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "excitement anticipated",
+    "category": "excitement"
+  },
+  "hyped": {
+    "polarity": "positive",
+    "weight": 1.6,
+    "replacement": "super excited",
+    "category": "excitement"
+  },
+  "legend": {
+    "polarity": "positive",
+    "weight": 1.9,
+    "replacement": "iconic remarkable",
+    "category": "praise"
+  },
+  "legendary": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "exceptional historic",
+    "category": "praise"
+  },
+  "clean": {
+    "polarity": "positive",
+    "weight": 1.4,
+    "replacement": "sleek well done",
+    "category": "style"
+  },
+  "clean af": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "extremely sleek and well designed",
+    "category": "style"
+  },
+  "smooth": {
+    "polarity": "positive",
+    "weight": 1.3,
+    "replacement": "effortless great",
+    "category": "style"
+  },
+  "gem": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "valuable rare find",
+    "category": "praise"
+  },
+  "elite": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "top tier superior",
+    "category": "praise"
+  },
+  "top tier": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "highest quality best",
+    "category": "praise"
+  },
+  "underrated": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "deserves more praise",
+    "category": "praise"
+  },
+  "stunning": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "gorgeous magnificent",
+    "category": "compliment"
+  },
+  "breathtaking": {
+    "polarity": "positive",
+    "weight": 2.1,
+    "replacement": "extraordinary remarkable",
+    "category": "praise"
+  },
+  "masterpiece": {
+    "polarity": "positive",
+    "weight": 2.4,
+    "replacement": "perfection work of art",
+    "category": "praise"
+  },
+  "god tier": {
+    "polarity": "positive",
+    "weight": 2.5,
+    "replacement": "unmatched supreme",
+    "category": "praise"
+  },
+  "locked in": {
+    "polarity": "positive",
+    "weight": 1.9,
+    "replacement": "deeply focused dedicated high quality",
+    "category": "praise"
+  },
+  "stand on business": {
+    "polarity": "positive",
+    "weight": 1.9,
+    "replacement": "accountable reliable stood firm",
+    "category": "praise"
+  },
+  "standing on business": {
+    "polarity": "positive",
+    "weight": 1.9,
+    "replacement": "accountable reliable stood firm",
+    "category": "praise"
+  },
+  "they cooked": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "performed amazingly created masterpiece",
+    "category": "praise"
+  },
+  "he cooked": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "performed amazingly created masterpiece",
+    "category": "praise"
+  },
+  "she cooked": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "performed amazingly created masterpiece",
+    "category": "praise"
+  },
+  "bro cooked": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "performed amazingly created masterpiece",
+    "category": "praise"
+  },
+  "devs cooked": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "performed amazingly created masterpiece",
+    "category": "praise"
+  },
+  "cooked fr": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "performed exceptionally truly great",
+    "category": "praise"
+  },
+  "let him cook": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "allow him to excel and impress",
+    "category": "praise"
+  },
+  "let them cook": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "allow them to excel and impress",
+    "category": "praise"
+  },
+  "cooking ki hai": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "created something incredible",
+    "category": "praise"
+  },
+  "we take those": {
+    "polarity": "positive",
+    "weight": 1.6,
+    "replacement": "we happily accept that win",
+    "category": "satisfaction"
+  },
+  "didn't completely fumble": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "succeeded avoided mistake",
+    "category": "relief"
+  },
+  "didn't fumble": {
+    "polarity": "positive",
+    "weight": 1.5,
+    "replacement": "succeeded avoided mistake",
+    "category": "relief"
+  },
+  "cracked": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "insanely good skilled",
+    "category": "gaming"
+  },
+  "op": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "overpowered top tier great",
+    "category": "gaming"
+  },
+  "ekdum mast": {
+    "polarity": "positive",
+    "weight": 2.2,
+    "replacement": "absolutely fantastic wonderful",
+    "category": "hinglish"
+  },
+  "mast": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "fantastic great",
+    "category": "hinglish"
+  },
+  "bawaal": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "sensational awesome",
+    "category": "hinglish"
+  },
+  "jhakaas": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "superb fantastic",
+    "category": "hinglish"
+  },
+  "paisa vasool": {
+    "polarity": "positive",
+    "weight": 2.3,
+    "replacement": "complete value for money worth every penny",
+    "category": "hinglish"
+  },
+  "paisa wasool": {
+    "polarity": "positive",
+    "weight": 2.3,
+    "replacement": "complete value for money worth every penny",
+    "category": "hinglish"
+  },
+  "jugaad": {
+    "polarity": "positive",
+    "weight": 1.6,
+    "replacement": "clever innovative smart solution",
+    "category": "hinglish"
+  },
+  "goes hard": {
+    "polarity": "positive",
+    "weight": 1.8,
+    "replacement": "extremely impressive good",
+    "category": "slang"
+  },
+  "hits different": {
+    "polarity": "positive",
+    "weight": 1.7,
+    "replacement": "unique special enjoyable",
+    "category": "slang"
+  },
+  "we are cooked": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "we are ruined doomed finished badly",
+    "category": "failure"
+  },
+  "we're cooked": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "we are ruined doomed finished badly",
+    "category": "failure"
+  },
+  "i'm cooked": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "i am ruined doomed finished badly",
+    "category": "failure"
+  },
+  "bro is cooked": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "he is ruined doomed finished badly",
+    "category": "failure"
+  },
+  "is cooked": {
+    "polarity": "negative",
+    "weight": -2.0,
+    "replacement": "is ruined doomed finished badly",
+    "category": "failure"
+  },
+  "cooked": {
+    "polarity": "negative",
+    "weight": -1.4,
+    "replacement": "ruined doomed",
+    "category": "failure"
+  },
+  "crash out": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "lost temper rage outburst disaster",
+    "category": "distress"
+  },
+  "crashed out": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "lost temper rage outburst disaster",
+    "category": "distress"
+  },
+  "loot liya": {
+    "polarity": "negative",
+    "weight": -2.4,
+    "replacement": "robbed ripped off cheated extortion",
+    "category": "hinglish"
+  },
+  "dimaag kharab": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "infuriating terrible headache frustrated",
+    "category": "hinglish"
+  },
+  "dimag kharab": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "infuriating terrible headache frustrated",
+    "category": "hinglish"
+  },
+  "chindi": {
+    "polarity": "negative",
+    "weight": -1.8,
+    "replacement": "cheap substandard stingy",
+    "category": "hinglish"
+  },
+  "khatam": {
+    "polarity": "negative",
+    "weight": -2.0,
+    "replacement": "finished ruined destroyed dead",
+    "category": "hinglish"
+  },
+  "tata bye bye": {
+    "polarity": "negative",
+    "weight": -2.0,
+    "replacement": "finished ruined destroyed dead",
+    "category": "hinglish"
+  },
+  "chomu": {
+    "polarity": "negative",
+    "weight": -1.8,
+    "replacement": "foolish incompetent clown",
+    "category": "hinglish"
+  },
+  "watt laga di": {
+    "polarity": "negative",
+    "weight": -2.3,
+    "replacement": "completely destroyed broken ruined",
+    "category": "hinglish"
+  },
+  "sus": {
+    "polarity": "negative",
+    "weight": -1.6,
+    "replacement": "suspicious sketchy untrustworthy",
+    "category": "distrust"
+  },
+  "cap": {
+    "polarity": "negative",
+    "weight": -1.5,
+    "replacement": "lie falsehood deceptive",
+    "category": "deception"
+  },
+  "mid": {
+    "polarity": "negative",
+    "weight": -1.6,
+    "replacement": "mediocre subpar unimpressive",
+    "category": "critique"
+  },
+  "trash": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "worthless garbage terrible",
+    "category": "insult"
+  },
+  "garbage": {
+    "polarity": "negative",
+    "weight": -2.1,
+    "replacement": "terrible substandard",
+    "category": "critique"
+  },
+  "cringe": {
+    "polarity": "negative",
+    "weight": -1.8,
+    "replacement": "embarrassing awkward",
+    "category": "disgust"
+  },
+  "cringey": {
+    "polarity": "negative",
+    "weight": -1.7,
+    "replacement": "embarrassing awkward",
+    "category": "disgust"
+  },
+  "delulu": {
+    "polarity": "negative",
+    "weight": -1.4,
+    "replacement": "delusional unrealistic",
+    "category": "critique"
+  },
+  "flop": {
+    "polarity": "negative",
+    "weight": -1.9,
+    "replacement": "total failure disaster",
+    "category": "failure"
+  },
+  "flopped": {
+    "polarity": "negative",
+    "weight": -1.9,
+    "replacement": "failed completely",
+    "category": "failure"
+  },
+  "l": {
+    "polarity": "negative",
+    "weight": -1.5,
+    "replacement": "loss failure embarrassment",
+    "category": "failure"
+  },
+  "huge l": {
+    "polarity": "negative",
+    "weight": -2.3,
+    "replacement": "massive defeat disaster",
+    "category": "failure"
+  },
+  "massive l": {
+    "polarity": "negative",
+    "weight": -2.3,
+    "replacement": "massive defeat disaster",
+    "category": "failure"
+  },
+  "ratio": {
+    "polarity": "negative",
+    "weight": -1.5,
+    "replacement": "publicly disapproved rejected",
+    "category": "social"
+  },
+  "ratioed": {
+    "polarity": "negative",
+    "weight": -1.6,
+    "replacement": "overwhelmingly downvoted",
+    "category": "social"
+  },
+  "ick": {
+    "polarity": "negative",
+    "weight": -1.8,
+    "replacement": "sudden disgust turnoff",
+    "category": "disgust"
+  },
+  "salty": {
+    "polarity": "negative",
+    "weight": -1.4,
+    "replacement": "bitter resentful",
+    "category": "emotion"
+  },
+  "scam": {
+    "polarity": "negative",
+    "weight": -2.4,
+    "replacement": "fraud dishonest rip off",
+    "category": "deception"
+  },
+  "scammed": {
+    "polarity": "negative",
+    "weight": -2.5,
+    "replacement": "defrauded cheated",
+    "category": "deception"
+  },
+  "clown": {
+    "polarity": "negative",
+    "weight": -1.7,
+    "replacement": "foolish ridiculous",
+    "category": "mockery"
+  },
+  "bogus": {
+    "polarity": "negative",
+    "weight": -1.6,
+    "replacement": "fake illegitimate",
+    "category": "critique"
+  },
+  "down bad": {
+    "polarity": "negative",
+    "weight": -1.5,
+    "replacement": "desperate miserable",
+    "category": "distress"
+  },
+  "npc": {
+    "polarity": "negative",
+    "weight": -1.4,
+    "replacement": "mindless unoriginal",
+    "category": "insult"
+  },
+  "touch grass": {
+    "polarity": "negative",
+    "weight": -1.5,
+    "replacement": "unrealistic out of touch",
+    "category": "insult"
+  },
+  "unhinged": {
+    "polarity": "negative",
+    "weight": -1.4,
+    "replacement": "erratic crazy bizarre",
+    "category": "behavior"
+  },
+  "overrated": {
+    "polarity": "negative",
+    "weight": -1.7,
+    "replacement": "hyped without merit inferior",
+    "category": "critique"
+  },
+  "dead wrong": {
+    "polarity": "negative",
+    "weight": -1.8,
+    "replacement": "completely incorrect",
+    "category": "error"
+  },
+  "rip off": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "overpriced scam exploitation",
+    "category": "commerce"
+  },
+  "ripoff": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "overpriced scam exploitation",
+    "category": "commerce"
+  },
+  "washed": {
+    "polarity": "negative",
+    "weight": -1.7,
+    "replacement": "past prime declined useless",
+    "category": "critique"
+  },
+  "fell off": {
+    "polarity": "negative",
+    "weight": -1.8,
+    "replacement": "declined in quality ruined",
+    "category": "critique"
+  },
+  "brick": {
+    "polarity": "negative",
+    "weight": -1.6,
+    "replacement": "useless broken failure",
+    "category": "failure"
+  },
+  "bricked": {
+    "polarity": "negative",
+    "weight": -2.0,
+    "replacement": "completely broken destroyed",
+    "category": "failure"
+  },
+  "buggy": {
+    "polarity": "negative",
+    "weight": -1.6,
+    "replacement": "glitchy defective",
+    "category": "defect"
+  },
+  "broken": {
+    "polarity": "negative",
+    "weight": -1.9,
+    "replacement": "nonfunctional defective",
+    "category": "defect"
+  },
+  "dog water": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "extremely terrible trash",
+    "category": "insult"
+  },
+  "dogshit": {
+    "polarity": "negative",
+    "weight": -2.5,
+    "replacement": "awful garbage",
+    "category": "insult"
+  },
+  "bakwas": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "worthless garbage terrible",
+    "category": "hinglish"
+  },
+  "ghatiya": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "substandard terrible",
+    "category": "hinglish"
+  },
+  "fumble": {
+    "polarity": "negative",
+    "weight": -1.5,
+    "replacement": "mistake blunder error",
+    "category": "failure"
+  },
+  "fumbled": {
+    "polarity": "negative",
+    "weight": -1.8,
+    "replacement": "ruined blunder failure",
+    "category": "failure"
+  },
+  "fr": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "genuinely for real",
+    "category": "emphasis"
+  },
+  "frfr": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "genuinely for real",
+    "category": "emphasis"
+  },
+  "ngl": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "not going to lie honestly",
+    "category": "hedging"
+  },
+  "tbh": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "to be honest",
+    "category": "hedging"
+  },
+  "idk": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "i do not know",
+    "category": "uncertainty"
+  },
+  "lowkey": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "somewhat slightly",
+    "category": "modifier"
+  },
+  "highkey": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "very prominently",
+    "category": "modifier"
+  },
+  "iykyk": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "if you know you know",
+    "category": "insider"
+  },
+  "imo": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "in my opinion",
+    "category": "hedging"
+  },
+  "imho": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "in my humble opinion",
+    "category": "hedging"
+  },
+  "fyi": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "for your information",
+    "category": "informational"
+  },
+  "btw": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "by the way",
+    "category": "transition"
+  },
+  "tea": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "gossip information",
+    "category": "topic"
+  },
+  "vibe check": {
+    "polarity": "neutral",
+    "weight": 0.0,
+    "replacement": "mood assessment",
+    "category": "social"
+  },
+  "lai bhari": {
+    "polarity": "positive",
+    "weight": 2.4,
+    "replacement": "awesome wonderful superb",
+    "category": "marathi"
+  },
+  "lay bhari": {
+    "polarity": "positive",
+    "weight": 2.4,
+    "replacement": "awesome wonderful superb",
+    "category": "marathi"
+  },
+  "khup chhan": {
+    "polarity": "positive",
+    "weight": 2.3,
+    "replacement": "very good fantastic wonderful",
+    "category": "marathi"
+  },
+  "ek number": {
+    "polarity": "positive",
+    "weight": 2.4,
+    "replacement": "first class brilliant superb",
+    "category": "marathi"
+  },
+  "kadak": {
+    "polarity": "positive",
+    "weight": 2.0,
+    "replacement": "sharp solid fire awesome",
+    "category": "marathi"
+  },
+  "bhari ahe": {
+    "polarity": "positive",
+    "weight": 2.1,
+    "replacement": "awesome great solid",
+    "category": "marathi"
+  },
+  "paise fukat": {
+    "polarity": "negative",
+    "weight": -2.4,
+    "replacement": "waste of money scam useless",
+    "category": "marathi"
+  },
+  "paise vaya": {
+    "polarity": "negative",
+    "weight": -2.4,
+    "replacement": "waste of money scam ruined",
+    "category": "marathi"
+  },
+  "kahi upyog nahi": {
+    "polarity": "negative",
+    "weight": -2.3,
+    "replacement": "completely useless unhelpful",
+    "category": "marathi"
+  },
+  "band padto": {
+    "polarity": "negative",
+    "weight": -2.4,
+    "replacement": "crashes freezes broken",
+    "category": "marathi"
+  },
+  "chalat nahi": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "not working broken fails",
+    "category": "marathi"
+  },
+  "doke dukhi": {
+    "polarity": "negative",
+    "weight": -2.0,
+    "replacement": "headache frustrating annoying",
+    "category": "marathi"
+  },
+  "doke tapla": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "infuriating frustrated angry",
+    "category": "marathi"
+  },
+  "faltu": {
+    "polarity": "negative",
+    "weight": -2.2,
+    "replacement": "useless rubbish trash",
+    "category": "marathi"
+  }
 }

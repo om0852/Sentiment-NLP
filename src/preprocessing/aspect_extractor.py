@@ -6,7 +6,9 @@ ASPECT_KEYWORDS = {
         "ui", "ux", "design", "look", "looks", "clean", "theme", "aesthetic", "aesthetics",
         "button", "buttons", "layout", "animation", "animations", "screen", "screens",
         "interface", "visual", "visuals", "dark mode", "font", "fonts", "colors",
-        "typography", "visual masterpiece", "micro-interactions", "contrast", "palette", "canvas"
+        "typography", "visual masterpiece", "micro-interactions", "contrast", "palette", "canvas",
+        # Indic (Hindi/Marathi)
+        "दिसतो", "दिसते", "दिखने में", "स्क्रीन", "थीम", "बटण", "बटन", "फॉन्ट", "डिझाइन", "डिजाइन", "लुक", "रंग"
     ],
     "performance": [
         "speed", "fast", "slow", "slower", "lag", "lagging", "smooth", "smoother",
@@ -15,26 +17,34 @@ ASPECT_KEYWORDS = {
         "cpu", "watt laga di", "load time", "loading", "optimize", "optimized",
         "latency", "query latency", "backend query", "throughput", "overheating",
         "thermal throttling", "kernel panic", "space heater", "packet loss", "frame drops",
-        "netcode", "audio compression", "transcription speed", "bottleneck"
+        "netcode", "audio compression", "transcription speed", "bottleneck",
+        # Indic (Hindi/Marathi)
+        "स्पीड", "हँग", "हॅंग", "क्रैश", "स्लो", "गती", "फास्ट", "बग", "बग्स", "बंद पडतो", "बंद पडतोय", "चालत नाही", "खराब चालतो"
     ],
     "customer_support": [
         "support", "service", "customer support", "customer service", "agent", "agents",
         "ticket", "tickets", "response", "refund", "refunds", "email", "helpdesk",
         "live chat", "ghosted", "call", "representative", "customer success",
-        "tier-one", "tier-two", "support desk", "escalation", "help desk"
+        "tier-one", "tier-two", "support desk", "escalation", "help desk",
+        # Indic (Hindi/Marathi)
+        "मदत", "सपोर्ट", "कॉल", "सेवा", "सर्व्हिस", "ग्राहक सेवा", "उत्तर", "मदत मिळत नाही"
     ],
     "pricing_value": [
         "price", "pricing", "cost", "subscription", "cheap", "expensive",
         "ripoff", "rip off", "rip-off", "scam", "paisa vasool", "paisa wasool",
         "worth it", "waste of money", "loot liya", "chindi", "paywall", "affordable",
         "shareholder value", "licensing", "annual renewal", "price hikes", "auto-renewed",
-        "annual contract", "billing", "charges", "charged"
+        "annual contract", "billing", "charges", "charged",
+        # Indic (Hindi/Marathi)
+        "पैसे", "किंमत", "महाग", "खर्च", "स्वस्त", "लूट", "सबस्क्रिप्शन", "पैसे वाया", "पैसे फुकट"
     ],
     "features": [
         "feature", "features", "update", "patch", "tool", "tools", "mode",
         "matchmaking", "export", "exports", "dashboard", "functionality", "weapons", "release",
         "sdk", "sdks", "driver", "webhook", "webhooks", "search index", "filter", "modal",
-        "reporting", "integration", "integrations", "documentation", "api"
+        "reporting", "integration", "integrations", "documentation", "api",
+        # Indic (Hindi/Marathi)
+        "फीचर", "फीचर्स", "अपडेट", "नवीन", "साधन", "टूल"
     ]
 }
 
@@ -45,7 +55,12 @@ POSITIVE_SIGNALS = {
     "awesome", "helpful", "responsive", "quick", "affordable", "worth", "worth it",
     "masterpiece", "breathtaking", "world-class", "stunning", "undeniable", "flawlessly",
     "wicked", "sick", "magic", "snappy", "generous", "tactile", "clickiness",
-    "ergonomic", "pristine", "studio-grade", "unmatched", "brilliant", "delight", "joy"
+    "ergonomic", "pristine", "studio-grade", "unmatched", "brilliant", "delight", "joy",
+    # Marathi & Hindi colloquialisms
+    "lai bhari", "lay bhari", "khup chhan", "ek number", "kadak", "bhari", "shandar", "badhiya",
+    # Devanagari positive
+    "छान", "मस्त", "उत्तम", "सुंदर", "बढ़िया", "शानदार", "लाजवाब", "झकास", "कडक", "भारी",
+    "चांगला", "चांगली", "चांगले", "सोपा", "सोपी", "सोपे", "सुरक्षित", "सर्वोत्तम"
 }
 
 NEGATIVE_SIGNALS = {
@@ -57,7 +72,12 @@ NEGATIVE_SIGNALS = {
     "failed", "fail", "glitch", "glitches", "lag", "lagging", "chindi",
     "nightmare", "unbearable", "bloatware", "infested", "throttling", "overheating",
     "drains", "erroneously", "predatory", "crippled", "clunky", "unoptimized",
-    "mediocre", "dull", "cash grab", "dial-up", "unforgivable", "corrupted"
+    "mediocre", "dull", "cash grab", "dial-up", "unforgivable", "corrupted",
+    # Marathi & Hindi colloquialisms
+    "paise fukat", "paise vaya", "kahi upyog nahi", "band padto", "chalat nahi", "doke dukhi", "faltu", "bakwas",
+    # Devanagari negative
+    "घटिया", "बकवास", "बेकार", "खराब", "फालतू", "कचरा", "रद्दी", "धोखा", "लूट", "त्रास",
+    "बग", "बग्स", "क्रैश", "हँग", "स्लो", "हळू", "महाग", "बंद पडतो", "चालत नाही", "वाईट"
 }
 
 class AspectExtractor:
@@ -72,7 +92,10 @@ class AspectExtractor:
             self.aspect_keyword_sets[aspect] = kw_set
             self.all_keywords.update(kw_set)
             for kw in kws:
-                patterns.append(re.compile(rf"\b{re.escape(kw)}\b", re.IGNORECASE))
+                if re.search(r"[\u0900-\u097F]", kw):
+                    patterns.append(re.compile(rf"(?<![\w\u0900-\u097F]){re.escape(kw)}(?![\w\u0900-\u097F])", re.IGNORECASE))
+                else:
+                    patterns.append(re.compile(rf"\b{re.escape(kw)}\b", re.IGNORECASE))
             self.aspect_patterns[aspect] = patterns
 
     def extract_aspects(self, text: str) -> Dict[str, str]:
@@ -93,7 +116,10 @@ class AspectExtractor:
         ))
 
         # Split text into sentence/clause chunks to scope polarity to aspect context
-        clauses = re.split(r"[.,;!?\n]|(?:\b(?:but|however|although|though|yet|while|on\s+the\s+other\s+hand)\b)", text_lower)
+        clauses = re.split(
+            r"[.,;!?\n।|]|(?:\b(?:but|however|although|though|yet|while|on\s+the\s+other\s+hand)\b|(?<![\w\u0900-\u097F])(?:पण|परंतु|तरी|किंतु)(?![\w\u0900-\u097F]))",
+            text_lower
+        )
 
         for aspect, patterns in self.aspect_patterns.items():
             if not any(k in text_lower for k in self.aspect_keyword_sets[aspect]):
@@ -112,7 +138,7 @@ class AspectExtractor:
             neg_score = 0
 
             for clause in aspect_clauses:
-                words = set(re.findall(r"\b\w+(?:-\w+)?\b", clause))
+                words = set(re.findall(r"[\u0900-\u097F]+|\b\w+(?:-\w+)?\b", clause))
                 
                 # Check direct phrase matches
                 for ps in POSITIVE_SIGNALS:
@@ -127,12 +153,14 @@ class AspectExtractor:
                     elif ns in words:
                         neg_score += 1
 
-                # Negation flip inside clause
-                if re.search(r"\b(not|never|no|hardly|scarcely)\s+(good|clean|fast|smooth|worth|impressive|responsive)\b", clause):
+                # Negation flip inside clause (English + Indic)
+                if re.search(r"\b(not|never|no|hardly|scarcely)\s+(good|clean|fast|smooth|worth|impressive|responsive)\b", clause) or \
+                   re.search(r"(?:चांगला|चांगली|चांगले|छान|मस्त|अच्छा|बढ़िया)\s+(?:नाही|नाहीत|नहीं)|(?:नाही|नहीं)\s+(?:चांगला|चांगली|अच्छा|छान)", clause):
                     neg_score += 2
-                if re.search(r"\b(not|never|no)\s+(bad|broken|slow|crash|glitch|terrible|disaster)\b", clause):
+                if re.search(r"\b(not|never|no)\s+(bad|broken|slow|crash|glitch|terrible|disaster)\b|(?:वाईट|खराब)\s+(?:नाही|नहीं)", clause):
                     pos_score += 1
-                if re.search(r"\b(fixed|resolved|eliminated|no|zero|gayab)\s+.*(bug|bugs|glitch|glitches|crash|crashes|lag|issue|issues|leak|leaks)\b|\b(bug|bugs|glitch|glitches|crash|crashes|lag|issue|issues|leak|leaks)\s+(gayab|fixed|resolved|eliminated|gone)\b", clause):
+                if re.search(r"\b(fixed|resolved|eliminated|no|zero|gayab)\s+.*(bug|bugs|glitch|glitches|crash|crashes|lag|issue|issues|leak|leaks)\b|\b(bug|bugs|glitch|glitches|crash|crashes|lag|issue|issues|leak|leaks)\s+(gayab|fixed|resolved|eliminated|gone)\b", clause) or \
+                   re.search(r"(?:बग|बग्स|समस्या)\s+(?:नाहीत|नाही|मिटले|दूर\s+झाले)", clause):
                     pos_score += 3
                     neg_score = max(0, neg_score - 3)
 
