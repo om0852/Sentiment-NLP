@@ -1,7 +1,12 @@
 import os
 import io
 from typing import Dict, Any, Optional
-from PIL import Image, ImageStat
+
+try:
+    from PIL import Image, ImageStat
+except ImportError:
+    Image = None
+    ImageStat = None
 
 class HybridVisionAnalyzer:
     """
@@ -16,12 +21,23 @@ class HybridVisionAnalyzer:
         """
         Extracts visual cues (dark mode, average brightness, payment app color signatures, visual tone).
         """
+        if Image is None:
+            return {
+                "visual_tone": "neutral",
+                "is_dark_mode": False,
+                "brightness": 128.0,
+                "is_payment_ui": False,
+                "detected_gateway": None,
+                "cloud_ai_used": False,
+                "note": "Pillow not available"
+            }
+
         try:
             if isinstance(image_input, (bytes, bytearray)):
                 img = Image.open(io.BytesIO(image_input))
             elif isinstance(image_input, str) and os.path.exists(image_input):
                 img = Image.open(image_input)
-            elif isinstance(image_input, Image.Image):
+            elif hasattr(image_input, "mode") and hasattr(image_input, "size"):
                 img = image_input
             else:
                 return {
@@ -53,7 +69,12 @@ class HybridVisionAnalyzer:
             # PhonePe: Signature Purple (#5f259f)
             # Paytm: Navy/Cyan (#002e6e / #00b9f5)
             # GPay: Multi-color / Google Blue (#1a73e8)
-            pixels = list(img.getdata())
+            if hasattr(img, "get_flattened_data"):
+                flat_data = list(img.get_flattened_data())
+                pixels = [flat_data[i:i+3] for i in range(0, len(flat_data), 3)]
+            else:
+                pixels = list(img.getdata())
+
             purple_count = 0
             blue_count = 0
             total_px = max(1, len(pixels))

@@ -1,9 +1,18 @@
 import os
 import sys
 import tempfile
-import cv2
 from typing import Dict, Any, List, Optional
-from PIL import Image
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 from src.multimodal.ocr_engine import OcrEngine
 from src.multimodal.audio_transcriber import AudioTranscriber
 
@@ -57,70 +66,69 @@ class VideoProcessor:
                 }
 
             # --- A. VIDEO METADATA & KEYFRAME EXTRACTION ---
-            cap = cv2.VideoCapture(target_path)
-            if not cap.isOpened():
-                return {
-                    "text": "",
-                    "spoken_text": "",
-                    "ocr_text": "",
-                    "subtitles": "",
-                    "metadata": {},
-                    "keyframes": [],
-                    "success": False,
-                    "error": "Failed to open video stream"
-                }
-
-            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            duration_sec = round(total_frames / fps, 2) if total_frames > 0 else 0.0
-
             metadata = {
-                "duration_seconds": duration_sec,
-                "fps": round(fps, 2),
-                "total_frames": total_frames,
-                "width": width,
-                "height": height,
-                "resolution": f"{width}x{height}"
+                "duration_seconds": 0.0,
+                "fps": 0.0,
+                "total_frames": 0,
+                "width": 0,
+                "height": 0,
+                "resolution": "0x0"
             }
-
             ocr_extracted_texts = []
             keyframe_info = []
 
-            if total_frames > 0:
-                step = total_frames / (max_frames + 1)
-                frame_indices = [int(step * (i + 1)) for i in range(max_frames)]
+            if cv2 is not None:
+                cap = cv2.VideoCapture(target_path)
+                if cap.isOpened():
+                    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+                    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                    duration_sec = round(total_frames / fps, 2) if total_frames > 0 else 0.0
 
-                for idx in frame_indices:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-                    ret, frame = cap.read()
-                    if not ret or frame is None:
-                        continue
+                    metadata = {
+                        "duration_seconds": duration_sec,
+                        "fps": round(fps, 2),
+                        "total_frames": total_frames,
+                        "width": width,
+                        "height": height,
+                        "resolution": f"{width}x{height}"
+                    }
 
-                    timestamp_sec = round(idx / fps, 2)
-                    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    pil_img = Image.fromarray(rgb_frame)
+                    if total_frames > 0 and Image is not None:
+                        step = total_frames / (max_frames + 1)
+                        frame_indices = [int(step * (i + 1)) for i in range(max_frames)]
 
-                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f_img:
-                        temp_img_path = f_img.name
+                        for idx in frame_indices:
+                            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+                            ret, frame = cap.read()
+                            if not ret or frame is None:
+                                continue
 
-                    try:
-                        pil_img.save(temp_img_path)
-                        ocr_res = self.ocr_engine.extract_text(temp_img_path)
-                        frame_text = ocr_res.get("text", "").strip()
-                        if frame_text and frame_text not in ocr_extracted_texts:
-                            ocr_extracted_texts.append(frame_text)
-                        keyframe_info.append({
-                            "frame_index": idx,
-                            "timestamp_seconds": timestamp_sec,
-                            "text": frame_text
-                        })
-                    finally:
-                        if os.path.exists(temp_img_path):
-                            os.remove(temp_img_path)
+                            timestamp_sec = round(idx / fps, 2)
+                            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                            pil_img = Image.fromarray(rgb_frame)
 
-            cap.release()
+                            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f_img:
+                                temp_img_path = f_img.name
+
+                            try:
+                                pil_img.save(temp_img_path)
+                                ocr_res = self.ocr_engine.extract_text(temp_img_path)
+                                frame_text = ocr_res.get("text", "").strip()
+                                if frame_text and frame_text not in ocr_extracted_texts:
+                                    ocr_extracted_texts.append(frame_text)
+                                keyframe_info.append({
+                                    "frame_index": idx,
+                                    "timestamp_seconds": timestamp_sec,
+                                    "text": frame_text
+                                })
+                            finally:
+                                if os.path.exists(temp_img_path):
+                                    os.remove(temp_img_path)
+
+                    cap.release()
+
             ocr_text = " ".join(ocr_extracted_texts).strip()
 
             # --- B. AUDIO & SPEECH TRANSCRIPTION ---
