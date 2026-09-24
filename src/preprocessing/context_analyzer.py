@@ -155,9 +155,10 @@ class ContextAnalyzer:
             re.compile(r"\bdidn't\s+leave\s+any\s+loose\s+ends\b", re.I),
             re.compile(r"\bnot\s+a\s+dumpster\s+fire\b", re.I),
             re.compile(r"(?:बग|बग्स|समस्या|त्रुटी)\s+.*(?:मिटले|नाहीत|नाही|दूर\s+झाले)"),
+            re.compile(r"\b(zero|no)\s+(regressions|downtime|bugs|issues|crashes|errors|incidents)\b", re.I),
         ]
         self.litotes_triggers = {
-            "not", "no", "cannot", "can't", "isn't", "didn't", "hardly",
+            "not", "no", "cannot", "can't", "isn't", "didn't", "hardly", "zero",
             "far from", "failed to", "nothing", "by no means",
             "बग", "बग्स", "समस्या", "त्रुटी", "मिटले"
         }

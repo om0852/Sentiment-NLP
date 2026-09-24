@@ -18,6 +18,7 @@ ASPECT_KEYWORDS = {
         "latency", "query latency", "backend query", "throughput", "overheating",
         "thermal throttling", "kernel panic", "space heater", "packet loss", "frame drops",
         "netcode", "audio compression", "transcription speed", "bottleneck",
+        "timing out", "timeout", "timeouts", "database", "connection pool",
         # Indic (Hindi/Marathi)
         "स्पीड", "हँग", "हॅंग", "क्रैश", "स्लो", "गती", "फास्ट", "बग", "बग्स", "बंद पडतो", "बंद पडतोय", "चालत नाही", "खराब चालतो"
     ],
@@ -74,6 +75,7 @@ NEGATIVE_SIGNALS = {
     "drains", "erroneously", "predatory", "crippled", "clunky", "unoptimized",
     "mediocre", "dull", "cash grab", "dial-up", "unforgivable", "corrupted",
     "crashed", "crashing", "leak", "leaks", "leaked", "critical",
+    "timeout", "timeouts", "timing out", "exhausted", "failing",
     # Marathi & Hindi colloquialisms
     "paise fukat", "paise vaya", "kahi upyog nahi", "band padto", "chalat nahi", "doke dukhi", "faltu", "bakwas",
     # Devanagari negative
