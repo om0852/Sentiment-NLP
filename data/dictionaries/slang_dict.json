@@ -1324,5 +1324,29 @@
     "weight": -2.3,
     "replacement": "completely useless no purpose",
     "category": "maranglish"
+  },
+  "bekar": {
+    "polarity": "negative",
+    "weight": -2.3,
+    "replacement": "completely useless terrible bad",
+    "category": "hinglish"
+  },
+  "paise doob gaye": {
+    "polarity": "negative",
+    "weight": -2.4,
+    "replacement": "money lost wasted ruined",
+    "category": "hinglish"
+  },
+  "paise doob": {
+    "polarity": "negative",
+    "weight": -2.4,
+    "replacement": "money lost wasted ruined",
+    "category": "hinglish"
+  },
+  "doob gaye": {
+    "polarity": "negative",
+    "weight": -2.0,
+    "replacement": "drowned lost ruined",
+    "category": "hinglish"
   }
 }

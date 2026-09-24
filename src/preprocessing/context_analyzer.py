@@ -251,6 +251,7 @@ class ContextAnalyzer:
 
         # 10. Precision & Nuance: Objective News Wires, Betting Tables & Catalog Neutralizer
         self.objective_news_patterns = [
+            re.compile(r"\b(post-mortem\s+(?:incident\s+)?report\s+published|incident\s+report\s+published|report\s+published\s+for\s+the)\b", re.I),
             re.compile(r"\b(cricket\s+betting\s+odds|betting\s+odds|odds\s+by|match\s+winner|upcoming\s+match)\b", re.I),
             re.compile(r"(?:on\s+X:\s*&quot;|\s*\|\s*Social\s+Samosa|\s*-\s*LinkedIn\b|\s*-\s*Reuters\b|\s*-\s*Bloomberg\b|\s*-\s*City\s+AM\b|\s*-\s*MSN\b|\s*-\s*K99\b)", re.I),
             re.compile(r"\b(press\s+photo|market\s+overview|closing\s+bell|quarterly\s+earnings\s+call\s+scheduled|round-up\s+for)\b", re.I),
@@ -265,6 +266,7 @@ class ContextAnalyzer:
         )
         self.objective_triggers = {
             "betting odds", "match winner", "on x:", "social samosa", "- linkedin", "- reuters", "- bloomberg", "- city am", "- msn", "- k99", "press photo", "market overview", "specifications", "in stock",
+            "post-mortem", "incident report", "report published", "published for",
             "शासनाने", "मंत्रालयाने", "सरकारने", "विभागाने", "जाहीर केली", "नियमावली"
         }
 
