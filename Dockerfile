@@ -18,11 +18,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ /app/src/
 COPY data/dictionaries/ /app/data/dictionaries/
 COPY models/ /app/models/
+COPY run.py /app/run.py
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["sh", "-c", "uvicorn src.serving.app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+CMD ["python", "run.py", "serve"]
 

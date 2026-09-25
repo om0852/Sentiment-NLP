@@ -7,10 +7,17 @@ def main():
     parser = argparse.ArgumentParser(description="Sentiment Engine CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
+    # Read PORT from environment variable if available (e.g. Render, Heroku, Docker)
+    raw_port = os.environ.get("PORT", "8000")
+    try:
+        default_port = int(raw_port)
+    except ValueError:
+        default_port = 8000
+
     # Serve command
     serve_parser = subparsers.add_parser("serve", help="Launch FastAPI production server")
     serve_parser.add_argument("--host", default="0.0.0.0", help="Host IP to bind (default: 0.0.0.0)")
-    serve_parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
+    serve_parser.add_argument("--port", type=int, default=default_port, help="Port to listen on")
     serve_parser.add_argument("--reload", action="store_true", help="Enable dev auto-reload")
 
     # Train command
@@ -85,3 +92,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
