@@ -28,12 +28,24 @@ class PureSentimentClassifier:
         self.is_trained = False
 
     def _tokenize(self, text: str) -> List[str]:
-        # Capture Indic Devanagari script, Latin words, and semantic tokens like _emoji_fire_
-        words = re.findall(r"[\u0900-\u097F]+|\b\w+\b|_[a-z0-9_]+_", text.lower())
+        # 1. Letter Normalization: collapse 3+ repeated characters down to 2 (e.g., loveee -> lovee)
+        normalized_text = re.sub(r"(.)\1{2,}", r"\1\1", text.lower())
+        
+        # 2. Extract Devanagari script, Latin words, and semantic emoji tokens
+        words = re.findall(r"[\u0900-\u097F]+|\b\w+\b|_[a-z0-9_]+_", normalized_text)
         tokens = list(words)
-        # Add bigrams for local context (negations, idioms, compound phrases)
+        
+        # 3. Add Word Bigrams for local context (negations, idioms, compound phrases)
         for i in range(len(words) - 1):
             tokens.append(f"{words[i]}_{words[i+1]}")
+            
+        # 4. Add Subword Character 3-grams for words of length 4 to 10 to catch typos & slang
+        for w in words:
+            l = len(w)
+            if 4 <= l <= 10 and not w.startswith("_"):
+                for k in range(l - 2):
+                    tokens.append(f"#{w[k:k+3]}#")
+                    
         return tokens
 
     def _get_tfidf_vec(self, tokens: List[str]) -> Dict[str, float]:

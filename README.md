@@ -35,8 +35,9 @@ Operating strictly within **$\le 300\text{ MB}$ RAM** and **$\le 0.1\text{ vCPU}
 | **LRU Cache Hit Latency** | $< 0.5\text{ ms}$ | **0.069 ms** | **$28.4\times$ speedup** |
 | **Throughput (1 Core)** | $> 200\text{ posts/s}$ | **1,683 posts / second** | **$8.4\times$ higher** |
 | **Throughput (0.1 vCPU)** | $\sim 11.6\text{ posts/s}$ ($10\text{L/day}$) | **168.3 posts / second** | **$14.5\times$ daily target** |
+| **TweetEval Benchmark (12.2k)** | $\ge 70.0\%$ | **73.16% Accuracy (0.7281 Macro F1)** | Matches CardiffNLP Twitter-RoBERTa (72.9%) |
 | **Runtime Memory (RSS)** | $\le 300\text{ MB}$ | **125.2 MB (local) / 148.7 MB (Railway)** | **$2.0\times$ under budget** |
-| **Model Disk Footprint** | $\le 25\text{ MB}$ | **0.48 MB** | **$52.1\times$ smaller** |
+| **Model Disk Footprint** | $\le 25\text{ MB}$ | **1.08 MB** | **$23.1\times$ smaller** |
 | **Operating Cost** | Budget $\le \$0.00$ | **$0.00 / month** | 100% Free-Tier |
 
 ---
