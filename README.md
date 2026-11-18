@@ -65,6 +65,12 @@ Reproduce with `python scripts/benchmark_external_models.py` (it downloads the t
 > **Known weak spot:** sarcasm/meme templates (hard set 2: 36%; roberta alone 46%). Tried and rejected: training one
 > model on both Codex and roberta labels (v3: better at English slang, but −7 points on our real posts).
 
+### Authentication
+
+Set `SENTIMENT_API_KEYS` (comma-separated) to require `X-API-Key: <key>` (or `Authorization: Bearer <key>`) on all data
+endpoints. Without it the API is open, as before. `/health` and the dashboard page are always public. See
+[deploy/oracle/README.md](deploy/oracle/README.md#api-keys-recommended-for-any-public-deployment).
+
 ### New response fields
 
 | Field | Meaning |
