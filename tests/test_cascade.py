@@ -110,7 +110,8 @@ def test_escalation_reasons():
     c = Cascade(student=FakeStudent(), config=dict(DEFAULT_CONFIG, escalate_below=0.7))
     assert c.escalation_reason("anything", 0.99, "model_inference", news=True) == "news_like"
     assert c.escalation_reason("Yay, Monday", 0.99, "model_inference") == "sarcasm_cue"
-    assert c.escalation_reason("खूप छान अनुभव", 0.99, "model_inference") == "non_latin_script"
+    assert c.escalation_reason("खूप छान अनुभव", 0.5, "model_inference") == "non_latin_script"
+    assert c.escalation_reason("खूप छान अनुभव", 0.99, "model_inference") is None  # confident tier 1 keeps it
     assert c.escalation_reason("nice phone", 0.5, "model_inference") == "low_confidence"
     assert c.escalation_reason("nice phone", 0.99, "model_inference") is None
     # thread-context rules see information the student never gets, so they are never overridden

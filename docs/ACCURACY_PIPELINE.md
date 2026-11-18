@@ -21,8 +21,16 @@ export SENTIMENT_DATA_ROOT=/path/to/checkout/with/data
 # 1 + 2. Gold sample for humans, and teacher labels for 60k other posts (local XLM-R, ~2-3 h on a laptop CPU)
 python scripts/build_silver_dataset.py --pool 60000
 
-# 3. Distil a 6-layer multilingual MiniLM student (~1.5-2 h on a 4-core laptop CPU), export int8 ONNX
-python scripts/train_student.py --epochs 1.5 --layers 6 --max-len 64
+# 2b. Better labels: an LLM labels 16k posts (sends post text to OpenAI / Google; ~200 posts/min with Codex).
+#     Pilot on 182 hand-labelled posts: Codex 88.9%, Gemini 88.9%, both-agree 93.8%; the XLM-R teacher ~65%.
+python scripts/llm_label.py --cli codex --input data/silver/llm_label_input.jsonl --output data/silver/llm_codex.jsonl
+
+# 3. Train the shipped student: 12-layer multilingual MiniLM, 128 tokens, Codex labels + TweetEval only.
+#    ~11 min on a Colab T4 GPU (colab/train_student_colab.ipynb + colab/build_colab_zip.py), hours on a laptop CPU.
+python scripts/train_student.py --layers 12 --max-len 128 --epochs 3 --batch 32 --lr 5e-5 \
+    --llm-labels data/silver/llm_codex.jsonl --silver-mode none --out-dir models/student
+#    (v1 was: --epochs 1.5 --layers 6 --max-len 64 on teacher+DB-agreement labels; those labels turned out to be
+#     only ~68% right when checked against Codex, which capped v1 at ~60% on real posts.)
 #    resume after an interruption from a saved state_dict:
 #    python scripts/train_student.py --epochs 0.9 --lr 4e-5 --layers 6 --max-len 64 --resume path/to/best.pt
 

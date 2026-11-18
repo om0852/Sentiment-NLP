@@ -237,7 +237,9 @@ async def predict_sentiment(req: SentimentPredictRequest):
 
             needs_fallback = (ctx_fallback or d["uncertain"] or (conf < req.confidence_threshold)
                               or meta.get("sarcasm_detected", False))
-            if meta.get("sarcasm_detected", False) and (not reason or reason == "model_inference"):
+            # an explicit sarcasm marker ("/s", "yeah right") is reported as the reason whichever tier answered
+            if meta.get("sarcasm_detected", False) and (not reason or reason == "model_inference"
+                                                        or reason.startswith("transformer_")):
                 reason = "sarcasm_detected"
                 
             fallback_res = None

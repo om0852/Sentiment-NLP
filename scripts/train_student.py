@@ -42,23 +42,53 @@ def bucket(key: str) -> int:
     return int(hashlib.md5(key.encode("utf-8")).hexdigest(), 16) % 100
 
 
-def load_data():
+def load_llm_labels(paths):
+    """{post id: label} from scripts/llm_label.py outputs. If several files label a post differently, drop it."""
+    labels, conflicts = {}, set()
+    for path in paths:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                r = json.loads(line)
+                if r["label"] not in L2I:
+                    continue
+                if r["id"] in labels and labels[r["id"]] != r["label"]:
+                    conflicts.add(r["id"])
+                labels[r["id"]] = r["label"]
+    for i in conflicts:
+        labels.pop(i, None)
+    return labels
+
+
+def load_data(llm_paths=(), silver_mode="agree"):
+    """Training rows from real posts plus TweetEval train/val.
+
+    For each real post: an LLM label (if any) wins; the teacher's soft probabilities are kept only when the teacher
+    agrees with that label. Posts without an LLM label are used only when teacher and DB label agree
+    (silver_mode="agree") or not at all (silver_mode="none"). Splits are by post-id hash, the same as everywhere else.
+    """
     silver_path = os.path.join(data_root, "data", "silver", "teacher_labels.jsonl")
+    llm = load_llm_labels(llm_paths) if llm_paths else {}
     train, val, calib = [], [], []
-    disagree = 0
+    counts = collections.Counter()
     with open(silver_path, encoding="utf-8") as f:
         for line in f:
             r = json.loads(line)
-            if r["original"] not in L2I:
+            if r["id"] in llm:
+                lab = llm[r["id"]]
+                soft = r["probs"] if r["teacher"] == lab else None
+                item = {"text": r["text"], "label": L2I[lab], "soft": soft, "src": "llm"}
+                counts["llm"] += 1
+            elif silver_mode == "agree" and r["original"] in L2I and r["teacher"] == r["original"]:
+                item = {"text": r["text"], "label": L2I[r["teacher"]], "soft": r["probs"], "src": "silver"}
+                counts["silver"] += 1
+            else:
+                counts["dropped"] += 1
                 continue
-            if r["teacher"] != r["original"]:
-                disagree += 1
-                continue
-            item = {"text": r["text"], "label": L2I[r["teacher"]], "soft": r["probs"], "src": "silver"}
             b = bucket(r["id"])
             (val if b < 4 else calib if b < 8 else train).append(item)
-    print(f"silver agree: train {len(train):,} val {len(val):,} calib {len(calib):,}; "
-          f"dropped {disagree:,} posts where teacher and DB label disagree", flush=True)
+    print(f"real posts: {dict(counts)} -> train {len(train):,} val {len(val):,} calib {len(calib):,}", flush=True)
+    if llm and counts["llm"] < len(llm):
+        print(f"note: {len(llm) - counts['llm']:,} LLM-labelled ids were not found in teacher_labels.jsonl", flush=True)
 
     te_dir = os.path.join(data_root, "data", "raw", "tweeteval")
     te_map = {0: 0, 1: 1, 2: 2}  # TweetEval ids already use negative/neutral/positive order
@@ -94,6 +124,10 @@ def main():
     ap.add_argument("--max-train", type=int, default=0, help="cap training rows (0 = all)")
     ap.add_argument("--layers", type=int, default=6, help="transformer layers to keep (MiniLM has 12)")
     ap.add_argument("--resume", default="", help="state_dict to start from (same --layers/--max-len/--vocab)")
+    ap.add_argument("--llm-labels", action="append", default=[], help="jsonl from scripts/llm_label.py (repeatable)")
+    ap.add_argument("--silver-mode", choices=["agree", "none"], default="agree",
+                    help="use teacher+DB-agreement posts that have no LLM label")
+    ap.add_argument("--out-dir", default="", help="where to write the model (default models/student)")
     args = ap.parse_args()
 
     import torch
@@ -103,10 +137,15 @@ def main():
     torch.manual_seed(0)
     random.seed(0)
     torch.set_num_threads(os.cpu_count() or 4)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"training device: {device}", flush=True)
+    global OUT_DIR
+    if args.out_dir:
+        OUT_DIR = os.path.abspath(args.out_dir)
     os.makedirs(OUT_DIR, exist_ok=True)
 
     tok = AutoTokenizer.from_pretrained(TOKENIZER_SRC)
-    train, val, calib = load_data()
+    train, val, calib = load_data(args.llm_labels, args.silver_mode)
     if args.max_train:
         random.shuffle(train)
         train = train[: args.max_train]
@@ -186,7 +225,7 @@ def main():
         enc = trimmed_tok.encode_batch([x["text"] if x["text"].strip() else "." for x in items])
         ids = torch.tensor([e.ids for e in enc], dtype=torch.long)
         mask = torch.tensor([e.attention_mask for e in enc], dtype=torch.long)
-        return ids, mask
+        return ids.to(device), mask.to(device)
 
     def predict_logits(items, bs=128):
         model.eval()
@@ -196,7 +235,7 @@ def main():
             for i in range(0, len(order), bs):
                 chunk = [items[j] for j in order[i: i + bs]]
                 ids, mask = encode(chunk)
-                out.append(model(input_ids=ids, attention_mask=mask).logits)
+                out.append(model(input_ids=ids, attention_mask=mask).logits.float().cpu())
         logits = torch.cat(out)
         res = torch.empty_like(logits)
         res[torch.tensor(order)] = logits
@@ -207,12 +246,15 @@ def main():
         gold = torch.tensor([x["label"] for x in items])
         return (logits.argmax(-1) == gold).float().mean().item()
 
+    if args.epochs <= 0 and not args.resume:
+        raise SystemExit("--epochs 0 only makes sense with --resume (otherwise the classifier head is untrained)")
     if args.resume:
         # continue from (or just export) a checkpoint saved by an earlier run with the same settings
-        model.load_state_dict(torch.load(args.resume))
+        model.load_state_dict(torch.load(args.resume, map_location="cpu"))
         print(f"resumed weights from {args.resume}", flush=True)
 
     # ---- training ----
+    model.to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
     steps_per_epoch = math.ceil(len(train) / args.batch)
     total = int(steps_per_epoch * args.epochs)
@@ -237,11 +279,11 @@ def main():
             model.train()
             ids, mask = encode(b)
             logits = model(input_ids=ids, attention_mask=mask).logits
-            hard = torch.tensor([x["label"] for x in b])
+            hard = torch.tensor([x["label"] for x in b], device=device)
             loss = F.cross_entropy(logits, hard)
             soft_rows = [i for i, x in enumerate(b) if x["soft"] is not None]
             if soft_rows:
-                soft = torch.tensor([b[i]["soft"] for i in soft_rows])
+                soft = torch.tensor([b[i]["soft"] for i in soft_rows], device=device)
                 kl = F.kl_div(F.log_softmax(logits[soft_rows], -1), soft, reduction="batchmean")
                 loss = (1 - args.alpha) * loss + args.alpha * kl * len(soft_rows) / len(b) + \
                     args.alpha * F.cross_entropy(logits, hard) * (1 - len(soft_rows) / len(b))
@@ -264,7 +306,7 @@ def main():
     if best < 0:  # no training steps (e.g. --epochs 0 with --resume): export the weights as they are
         best = accuracy(val)
         torch.save(model.state_dict(), os.path.join(OUT_DIR, "best.pt"))
-    model.load_state_dict(torch.load(os.path.join(OUT_DIR, "best.pt")))
+    model.load_state_dict(torch.load(os.path.join(OUT_DIR, "best.pt"), map_location=device))
     print(f"best val accuracy {best:.2%}", flush=True)
 
     # ---- calibration (step 5): temperature on held-out calib split ----
@@ -272,7 +314,8 @@ def main():
     temperature = fit_temperature(calib_logits, np.array([x["label"] for x in calib]))
     print(f"fitted temperature {temperature:.3f}", flush=True)
 
-    # ---- export: ONNX fp32 -> dynamic int8 ----
+    # ---- export: ONNX fp32 -> dynamic int8 (always on CPU) ----
+    model.cpu()
     model.eval()
     fp32 = os.path.join(OUT_DIR, "model.fp32.onnx")
     dummy_ids = torch.ones(2, 16, dtype=torch.long)

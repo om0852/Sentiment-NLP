@@ -1,16 +1,16 @@
 # ⚡ Ultra-Lightweight Pragmatic Sentiment Engine
 
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![RAM Footprint](https://img.shields.io/badge/RAM%20Budget-%3C300MB%20(Actual:%20263MB)-success.svg)]()
-[![vCPU Budget](https://img.shields.io/badge/CPU%20Budget-0.1%20vCPU-success.svg)]()
+[![RAM Footprint](https://img.shields.io/badge/RAM-281MB%20peak-success.svg)]()
+[![CPU](https://img.shields.io/badge/CPU-1%20core%20(~870k%20posts%2Fday)-success.svg)]()
 [![Cost](https://img.shields.io/badge/Cloud%20Cost-%240.00%2Fmo%20(Free%20Tier)-brightgreen.svg)]()
-[![TweetEval](https://img.shields.io/badge/TweetEval%20(held--out)-63.4%25-orange.svg)]()
+[![TweetEval](https://img.shields.io/badge/TweetEval%20(held--out)-67.1%25-orange.svg)]()
 [![300k Evaluation](https://img.shields.io/badge/Production%20300k%20Stream-923%20posts%2Fsec-blue.svg)]()
 [![Live Deployment](https://img.shields.io/badge/Railway-Live%20Production-success.svg)](https://sentiment-nlp-production.up.railway.app/)
 
 A production-grade, ultra-lightweight sentiment analysis microservice specialized in modern social vernacular (**Gen-Z slang, multi-modal emojis, complex negations, contrastive clauses, Hinglish, cultural disaster tropes, and thread-context sarcasm**).
 
-Operating within **$\le 300\text{ MB}$ RAM** at **$\$0.00\text{ cloud cost}$**: about **430,000 posts/day at 0.1 vCPU** with the transformer tier, or 1M+ posts/day with `DISABLE_TRANSFORMER=1` (TF-IDF tier only) or ~0.23 vCPU.
+Runs in **~280 MB RAM** on **one CPU core** (~870k posts/day with the transformer tier; 10M+/day with `DISABLE_TRANSFORMER=1`), e.g. on an Oracle Cloud Always Free ARM instance.
 
 ---
 
@@ -26,25 +26,26 @@ Operating within **$\le 300\text{ MB}$ RAM** at **$\$0.00\text{ cloud cost}$**: 
 ## 📊 Accuracy & Performance (measured 2026-11-18)
 
 Two tiers: the original TF-IDF model + hand-written rules, and a distilled multilingual transformer
-(6-layer MiniLM, int8 ONNX). Long posts, news and non-Latin posts go to the transformer; short posts, romanized
-Hinglish/Maranglish and posts where a hand-written rule fires stay on the fast tier. See
-[docs/ACCURACY_PIPELINE.md](docs/ACCURACY_PIPELINE.md) for how it is built and measured.
+(12-layer MiniLM, 128 tokens, int8 ONNX) trained on ~16k of our real posts labelled by an LLM (Codex, ~89% agreement
+with careful manual labels) plus TweetEval. Almost every post goes to the transformer. The fast tier keeps posts under
+25 characters, romanized Hinglish/Maranglish, posts where a hand-written rule fires, and posts it is ≥90% sure about
+(e.g. dictionary-backed Hindi/Marathi). See [docs/ACCURACY_PIPELINE.md](docs/ACCURACY_PIPELINE.md).
 
-| Accuracy (3-class) | Before (TF-IDF + rules) | **Now (hybrid)** |
-| :--- | :--- | :--- |
-| **Real posts from our data** (182 random posts, labelled by an LLM per the guide, not yet by humans) | 41.2% | **59.9%** |
-| ↳ on posts not flagged `uncertain` (86% of posts) | n/a | 64.1% |
-| **TweetEval sentiment test** (12,284 tweets, human labels, held out from all training) | 59.4% | **63.4%** |
-| ↳ on posts not flagged `uncertain` (69% of posts) | n/a | 69.9% |
-| Hand-written real-world style sets (174 + 126 posts) | 66.7% / 62.7% | 67.2% / 65.1% |
-| Hard sets (`benchmark_hard_50.py`, `benchmark_hard_set_2.py`) | 38% / 44% | 42% / 32% |
+| Accuracy (3-class, data no model was trained on) | Original | v1 (PR #1) | **Now** |
+| :--- | :--- | :--- | :--- |
+| **Real posts from our data** (182 random posts, labelled per the guide by Claude, not yet by humans) | 41.2% | 59.9% | **78.6%** |
+| ↳ on posts not flagged `uncertain` (80% of posts) | n/a | 64.1% | **84.9%** |
+| **TweetEval sentiment test** (12,284 tweets, human labels) | 59.4% | 63.4% | **67.1%** |
+| ↳ on posts not flagged `uncertain` (76% of posts) | n/a | 69.9% | **73.0%** |
+| Hand-written real-world style sets (174 + 126 posts) | 66.7% / 62.7% | 67.2% / 65.1% | 68.4% / 63.5% |
+| Hard sets (`benchmark_hard_50.py`, `benchmark_hard_set_2.py`) | 38% / 44% | 42% / 32% | 40% / 20% |
 
-| Resource | Budget | Measured |
-| :--- | :--- | :--- |
-| Runtime memory (RSS, both tiers loaded) | ≤ 300 MB | **255 MB at startup, 263 MB peak** |
-| CPU per post (real-post mix, 1 thread) | — | **~20 ms** (TF-IDF tier alone: ~1.5 ms) |
-| Capacity at 0.1 vCPU | 100k–1M posts/day | **~430k posts/day**; 1M/day needs ~0.23 vCPU, or set `DISABLE_TRANSFORMER=1` |
-| Model files on disk | — | 34 MB transformer + 4 MB tokenizer + 1 MB news detector + 1 MB TF-IDF |
+| Resource | Measured (laptop CPU, 1 thread) |
+| :--- | :--- |
+| Runtime memory (RSS, both tiers loaded) | **275 MB at startup, 281 MB peak** |
+| CPU per post (real-post mix) | **~100 ms** (TF-IDF tier alone: ~1 ms) |
+| Capacity | **~870k posts/day per CPU core**. Fits one Oracle Always Free Ampere core (1 OCPU / 6 GB, see [deploy/oracle](deploy/oracle/README.md)); `DISABLE_TRANSFORMER=1` gives 10M+/day at lower accuracy |
+| Model files on disk | 45 MB transformer + 4 MB tokenizer + 1 MB news detector + 1 MB TF-IDF |
 
 > **Note on accuracy numbers (corrected 2026-11-17).** Earlier versions of this README claimed 100/100 on the hard
 > benchmarks and 73.16% on TweetEval. The hard-benchmark result does not reproduce on the committed code, and the
@@ -53,6 +54,9 @@ Hinglish/Maranglish and posts where a hand-written rule fires stay on the fast t
 >
 > The number to trust most will be the **human-labelled gold set** (`data/gold/gold_sample.csv`, 1,500 random real
 > posts, see [docs/LABELLING_GUIDE.md](docs/LABELLING_GUIDE.md)); run `python scripts/evaluate_gold.py` once it's labelled.
+>
+> **Known weak spots:** sarcasm/meme templates (hard set 2: 20%) and some short slang the transformer reads as
+> neutral, e.g. "Uninstalling immediately #BoycottApp" (the one failing test in `tests/`).
 
 ### New response fields
 
@@ -60,11 +64,11 @@ Hinglish/Maranglish and posts where a hand-written rule fires stay on the fast t
 | :--- | :--- |
 | `tier` | `tfidf` (fast tier) or `transformer` |
 | `content_type` | `news` for factual reporting / headlines, else `social` |
-| `uncertain` | Transformer's calibrated confidence is below `uncertain_below` (0.65). Route to a person or an LLM |
+| `uncertain` | Transformer's calibrated confidence is below `uncertain_below` (0.6). Route to a person or an LLM |
 
 Confidence is now **calibrated** (temperature scaling), so it is lower than before for the TF-IDF tier: 0.6 really means
 about 60% likely to be right. A side effect: more posts fall under the default `confidence_threshold` of 0.60 and get
-`fallback_required: true` (on short English posts ~42% vs ~21% before; on real posts 19% vs 21%). If you call the API
+`fallback_required: true` (about 20–30% of posts, vs ~21% before). If you call the API
 with `enable_fallback: true`, that means more calls to the fallback service.
 
 ---

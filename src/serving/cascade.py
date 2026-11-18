@@ -182,13 +182,13 @@ class Cascade:
             return None  # short posts: slang/emoji dictionaries beat the student here
         if self.cfg.get("keep_romanized_indic_on_tier1") and is_romanized_indic(text):
             return None  # Hinglish/Maranglish in Latin script: same reason
+        if self.cfg["escalate_sarcasm_cues"] and has_sarcasm_cue(text):
+            return "sarcasm_cue"  # before the confidence check: bag-of-words is often confidently wrong here
+        if tier1_conf >= self.cfg["escalate_below"]:
+            return None  # tier 1 (calibrated) is very sure, e.g. dictionary-backed Hindi/Marathi
         if self.cfg["escalate_non_latin"] and non_latin_share(text) > 0.3:
             return "non_latin_script"
-        if self.cfg["escalate_sarcasm_cues"] and has_sarcasm_cue(text):
-            return "sarcasm_cue"
-        if tier1_conf < self.cfg["escalate_below"]:
-            return "low_confidence"
-        return None
+        return "low_confidence"
 
     def run_student(self, texts: List[str]) -> List[Dict]:
         return self.student.predict_batch(texts) if (self.student and texts) else []
