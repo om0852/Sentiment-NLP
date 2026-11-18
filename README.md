@@ -1,16 +1,16 @@
 # ⚡ Ultra-Lightweight Pragmatic Sentiment Engine
 
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![RAM Footprint](https://img.shields.io/badge/RAM%20Budget-%3C300MB%20(Actual:%20125MB)-success.svg)]()
+[![RAM Footprint](https://img.shields.io/badge/RAM%20Budget-%3C300MB%20(Actual:%20263MB)-success.svg)]()
 [![vCPU Budget](https://img.shields.io/badge/CPU%20Budget-0.1%20vCPU-success.svg)]()
 [![Cost](https://img.shields.io/badge/Cloud%20Cost-%240.00%2Fmo%20(Free%20Tier)-brightgreen.svg)]()
-[![Benchmark Hard Sets](https://img.shields.io/badge/Hard%20Benchmarks-100%2F100%20(100%25)-brightgreen.svg)]()
+[![TweetEval](https://img.shields.io/badge/TweetEval%20(held--out)-63.4%25-orange.svg)]()
 [![300k Evaluation](https://img.shields.io/badge/Production%20300k%20Stream-923%20posts%2Fsec-blue.svg)]()
 [![Live Deployment](https://img.shields.io/badge/Railway-Live%20Production-success.svg)](https://sentiment-nlp-production.up.railway.app/)
 
 A production-grade, ultra-lightweight sentiment analysis microservice specialized in modern social vernacular (**Gen-Z slang, multi-modal emojis, complex negations, contrastive clauses, Hinglish, cultural disaster tropes, and thread-context sarcasm**).
 
-Operating strictly within **$\le 300\text{ MB}$ RAM** and **$\le 0.1\text{ vCPU}$**, processing **$100,000\text{ to }1,000,000+\text{ posts/day}$** at **$\$0.00\text{ cloud cost}$**.
+Operating within **$\le 300\text{ MB}$ RAM** at **$\$0.00\text{ cloud cost}$**: about **430,000 posts/day at 0.1 vCPU** with the transformer tier, or 1M+ posts/day with `DISABLE_TRANSFORMER=1` (TF-IDF tier only) or ~0.23 vCPU.
 
 ---
 
@@ -23,22 +23,49 @@ Operating strictly within **$\le 300\text{ MB}$ RAM** and **$\le 0.1\text{ vCPU}
 
 ---
 
-## 📊 Key Achievements & Performance Metrics
+## 📊 Accuracy & Performance (measured 2026-11-18)
 
-| Metric | Budget / Target | Measured In Production | Safety Headroom |
-| :--- | :--- | :--- | :--- |
-| **Hard Benchmark Accuracy** | $\ge 85.0\%$ | **100.0% (100 / 100 passed)** | Outperformed 70B LLMs |
-| **1,000 Boundary Stress Test**| $\ge 90.0\%$ | **100.0% (1,000 / 1,000 passed)** | 10 complex NLP failure modes |
-| **300k Real MongoDB Stream**  | 300,000 posts | **923 posts / sec (325.0s total)** | 158.7k exact / 141.2k refined |
-| **Statistical Latency** | $< 2.0\text{ ms}$ | **0.058 - 0.087 ms** | **$23\times$ faster** |
-| **End-to-End Latency** | $< 10.0\text{ ms}$ | **1.08 - 1.56 ms** | **$6.4\times$ faster** |
-| **LRU Cache Hit Latency** | $< 0.5\text{ ms}$ | **0.069 ms** | **$28.4\times$ speedup** |
-| **Throughput (1 Core)** | $> 200\text{ posts/s}$ | **1,683 posts / second** | **$8.4\times$ higher** |
-| **Throughput (0.1 vCPU)** | $\sim 11.6\text{ posts/s}$ ($10\text{L/day}$) | **168.3 posts / second** | **$14.5\times$ daily target** |
-| **TweetEval Benchmark (12.2k)** | $\ge 70.0\%$ | **73.16% Accuracy (0.7281 Macro F1)** | Matches CardiffNLP Twitter-RoBERTa (72.9%) |
-| **Runtime Memory (RSS)** | $\le 300\text{ MB}$ | **125.2 MB (local) / 148.7 MB (Railway)** | **$2.0\times$ under budget** |
-| **Model Disk Footprint** | $\le 25\text{ MB}$ | **1.08 MB** | **$23.1\times$ smaller** |
-| **Operating Cost** | Budget $\le \$0.00$ | **$0.00 / month** | 100% Free-Tier |
+Two tiers: the original TF-IDF model + hand-written rules, and a distilled multilingual transformer
+(6-layer MiniLM, int8 ONNX). Long posts, news and non-Latin posts go to the transformer; short posts, romanized
+Hinglish/Maranglish and posts where a hand-written rule fires stay on the fast tier. See
+[docs/ACCURACY_PIPELINE.md](docs/ACCURACY_PIPELINE.md) for how it is built and measured.
+
+| Accuracy (3-class) | Before (TF-IDF + rules) | **Now (hybrid)** |
+| :--- | :--- | :--- |
+| **Real posts from our data** (182 random posts, labelled by an LLM per the guide, not yet by humans) | 41.2% | **59.9%** |
+| ↳ on posts not flagged `uncertain` (86% of posts) | n/a | 64.1% |
+| **TweetEval sentiment test** (12,284 tweets, human labels, held out from all training) | 59.4% | **63.4%** |
+| ↳ on posts not flagged `uncertain` (69% of posts) | n/a | 69.9% |
+| Hand-written real-world style sets (174 + 126 posts) | 66.7% / 62.7% | 67.2% / 65.1% |
+| Hard sets (`benchmark_hard_50.py`, `benchmark_hard_set_2.py`) | 38% / 44% | 42% / 32% |
+
+| Resource | Budget | Measured |
+| :--- | :--- | :--- |
+| Runtime memory (RSS, both tiers loaded) | ≤ 300 MB | **255 MB at startup, 263 MB peak** |
+| CPU per post (real-post mix, 1 thread) | — | **~20 ms** (TF-IDF tier alone: ~1.5 ms) |
+| Capacity at 0.1 vCPU | 100k–1M posts/day | **~430k posts/day**; 1M/day needs ~0.23 vCPU, or set `DISABLE_TRANSFORMER=1` |
+| Model files on disk | — | 34 MB transformer + 4 MB tokenizer + 1 MB news detector + 1 MB TF-IDF |
+
+> **Note on accuracy numbers (corrected 2026-11-17).** Earlier versions of this README claimed 100/100 on the hard
+> benchmarks and 73.16% on TweetEval. The hard-benchmark result does not reproduce on the committed code, and the
+> TweetEval figure came from a model that had been trained on the TweetEval test split. Training now excludes that
+> split, and every number above is measured on data no model was trained on.
+>
+> The number to trust most will be the **human-labelled gold set** (`data/gold/gold_sample.csv`, 1,500 random real
+> posts, see [docs/LABELLING_GUIDE.md](docs/LABELLING_GUIDE.md)); run `python scripts/evaluate_gold.py` once it's labelled.
+
+### New response fields
+
+| Field | Meaning |
+| :--- | :--- |
+| `tier` | `tfidf` (fast tier) or `transformer` |
+| `content_type` | `news` for factual reporting / headlines, else `social` |
+| `uncertain` | Transformer's calibrated confidence is below `uncertain_below` (0.65). Route to a person or an LLM |
+
+Confidence is now **calibrated** (temperature scaling), so it is lower than before for the TF-IDF tier: 0.6 really means
+about 60% likely to be right. A side effect: more posts fall under the default `confidence_threshold` of 0.60 and get
+`fallback_required: true` (on short English posts ~42% vs ~21% before; on real posts 19% vs 21%). If you call the API
+with `enable_fallback: true`, that means more calls to the fallback service.
 
 ---
 
@@ -166,7 +193,10 @@ python scripts/benchmark_hard_50.py
 # 3. Run Hard Set 2 (Memes, Sarcasm, Pop-Culture Lore - 50 samples)
 python scripts/benchmark_hard_set_2.py
 
-# 4. Run automated test suite
+# 4. Run the held-out TweetEval benchmark (data/ is gitignored; point at the checkout that has it)
+SENTIMENT_DATA_ROOT=/path/to/checkout/with/data python scripts/benchmark_tweeteval.py
+
+# 5. Run automated test suite
 pytest tests/
 ```
 

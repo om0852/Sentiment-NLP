@@ -1,0 +1,15 @@
+{
+  "tfidf_temperature": 2.7026,
+  "escalate_below": 1.01,
+  "uncertain_below": 0.65,
+  "escalate_news": true,
+  "news_threshold": 0.7,
+  "escalate_sarcasm_cues": true,
+  "escalate_non_latin": true,
+  "disabled_rules": [
+    "cultural_disaster_metaphor"
+  ],
+  "rules_override_student": true,
+  "short_text_chars": 60,
+  "keep_romanized_indic_on_tier1": true
+}

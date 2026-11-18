@@ -257,13 +257,17 @@ The engine was evaluated against **100 verified hard social test cases**:
 
 | Test Suite | Total Samples | Passed | Failed | Accuracy | Avg Latency |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Hard Set 1** | 50 | 50 | 0 | **100.0%** | $1.56\text{ ms}$ |
-| **Hard Set 2** | 50 | 50 | 0 | **100.0%** | $1.59\text{ ms}$ |
-| **Combined** | **100** | **100** | **0** | **100.0%** | **$1.58\text{ ms}$** |
+| **Hard Set 1** | 50 | 21 | 29 | **42.0%** | — |
+| **Hard Set 2** | 50 | 16 | 34 | **32.0%** | — |
+| **Combined** | **100** | **37** | **63** | **37.0%** | — |
+
+Re-measured 2026-11-18 with the hybrid TF-IDF + transformer engine (TF-IDF alone, retrained without the TweetEval test
+split, scores 19/50 and 22/50). An earlier 100/100 figure does not reproduce on the committed code. These hand-picked
+sets are harder than real traffic; see the README for accuracy on real posts and TweetEval.
 
 ### 4.2 1,000-Item Adversarial Boundary Stress Test
 Evaluated across 10 complex NLP failure modes (100 cases per category):
-- **Accuracy:** **1,000 / 1,000 (100.0%)**
+- **Accuracy:** previously reported as 1,000 / 1,000. There is no script for this test in the repo, so it cannot be re-checked.
 - **Average Latency:** **0.91 ms / post** (>1,090 posts / second)
 - **Categories Covered:** Syntactic Ambiguity & Garden Path, Polysemy & Contronyms, Hinglish Code-Switching, Litotes & Negation Scope, Corporate Doublespeak, ABSA & Multi-Clause Contrast, Emoji Dissonance, Rhetorical Mockery, Technical Telemetry, and Thread Context Inversions.
 

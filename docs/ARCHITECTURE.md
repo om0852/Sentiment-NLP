@@ -26,7 +26,7 @@ While Massive Large Language Models (LLMs) with 70B+ parameters can parse these 
 This sentiment engine pairs a **$0.48\text{ MB}$ calibrated statistical foundation** with a **zero-overhead deterministic pragmatic context engine**:
 - **Zero Cost:** Runs completely in-memory on standard container runtimes (e.g. Railway, Render, Fly.io, AWS Fargate).
 - **Sub-2ms Latency:** 98%+ of requests resolve in $< 2\text{ ms}$, with LRU cache hits resolving in $< 0.07\text{ ms}$.
-- **100% Accuracy on Hard Benchmark Sets:** Outperformed raw LLM baselines on 100 verified hard social edge cases.
+- **Accuracy (2026-11-18):** held-out TweetEval 63.4% (59.4% before the transformer tier); 59.9% on a random sample of real posts (41.2% before); 37/100 on the two hard edge-case sets (41/100 before) (an earlier 100% claim does not reproduce). See docs/ACCURACY_PIPELINE.md.
 
 ---
 

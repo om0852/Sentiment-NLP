@@ -26,6 +26,9 @@ class SentimentPredictionItem(BaseModel):
     is_performance_issue: bool = False
     is_risk_complaint: bool = False
     is_mixed: bool = False
+    tier: str = Field("tfidf", description="Which model decided: 'tfidf' (fast tier) or 'transformer' (accurate tier)")
+    content_type: str = Field("social", description="'news' for factual reporting/headlines, else 'social'")
+    uncertain: bool = Field(False, description="Calibrated confidence is too low to trust; route to a human or LLM")
 
 class SentimentPredictResponse(BaseModel):
     results: List[SentimentPredictionItem]

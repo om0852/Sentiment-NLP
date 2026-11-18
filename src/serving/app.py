@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import time
@@ -19,6 +20,8 @@ from src.preprocessing.context_analyzer import ContextAnalyzer
 from src.preprocessing.aspect_extractor import AspectExtractor
 from src.multimodal import MultimodalPipeline
 from src.serving.cache import SentimentLRUCache
+from src.serving.cascade import Cascade, classify_batch, news_probability
+from src.models.student_onnx import StudentClassifier
 from src.serving.active_learning import ActiveLearningQueue, ActiveLearningBuffer
 from src.serving.fallback import FallbackService
 from src.serving.schemas import (
@@ -48,10 +51,11 @@ aspect_extractor: Optional[AspectExtractor] = None
 cache: Optional[SentimentLRUCache] = None
 active_learning: Optional[ActiveLearningQueue] = None
 fallback_service: Optional[FallbackService] = None
+cascade: Optional[Cascade] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model, pipeline, context_analyzer, aspect_extractor, cache, active_learning, fallback_service, multimodal_pipeline
+    global model, pipeline, context_analyzer, aspect_extractor, cache, active_learning, fallback_service, multimodal_pipeline, cascade
     print("Initializing sentiment engine runtime...")
     
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -86,7 +90,20 @@ async def lifespan(app: FastAPI):
         print(f"Sentiment model successfully loaded from {model_joblib}")
     else:
         print(f"WARNING: Model not found at {model_gz}. Predictions will fail until trained.")
-        
+
+    # Tier 2: distilled multilingual transformer (optional; set DISABLE_TRANSFORMER=1 to run TF-IDF only)
+    student = None
+    student_dir = os.path.join(project_root, "models", "student")
+    if os.getenv("DISABLE_TRANSFORMER") != "1" and StudentClassifier.available(student_dir):
+        try:
+            student = StudentClassifier(student_dir, threads=int(os.getenv("TRANSFORMER_THREADS", "1")))
+            student.predict_batch(["warm up the onnxruntime session"])  # pay one-off init cost at startup
+            print(f"Transformer tier loaded from {student_dir}")
+        except Exception as e:
+            print(f"WARNING: transformer tier failed to load ({e}); serving TF-IDF only.")
+    cascade = Cascade(student=student)
+    news_probability(["warm up"])  # load the news detector before requests can race on it
+
     yield
     print("Shutting down sentiment engine runtime...")
 
@@ -193,7 +210,7 @@ async def predict_sentiment(req: SentimentPredictRequest):
             cache_hits += 1
             if req.extract_aspects and not cached_item.get("aspects") and aspect_extractor:
                 cached_item["aspects"] = aspect_extractor.extract_aspects(text)
-            resolved_results[i] = SentimentPredictionItem(**cached_item)
+            resolved_results[i] = SentimentPredictionItem(**{**cached_item, "cached": True})
         else:
             texts_to_process.append((i, text, ctx))
             
@@ -203,30 +220,23 @@ async def predict_sentiment(req: SentimentPredictRequest):
         uncached_texts = [item[1] for item in texts_to_process]
         uncached_contexts = [item[2] for item in texts_to_process]
         
-        # Preprocess in batch
-        processed_texts = []
-        metas = []
-        for t in uncached_texts:
-            proc_t, meta = pipeline.process(t)
-            processed_texts.append(proc_t)
-            metas.append(meta)
-            
-        # Model predictions
-        preds = model.predict_batch(processed_texts, confidence_threshold=req.confidence_threshold)
-        
-        # Analyze each uncached prediction
+        # Tier 1 (TF-IDF + rules) and, where needed, tier 2 (transformer). See src/serving/cascade.py.
+        # CPU-bound (transformer inference): run it in a worker thread so /health and other requests aren't blocked
+        decisions = await asyncio.to_thread(
+            classify_batch, uncached_texts, uncached_contexts, model, pipeline, context_analyzer, cascade)
+
         for idx, orig_idx in enumerate(uncached_indices):
             raw_t = uncached_texts[idx]
             ctx = uncached_contexts[idx]
-            pred = preds[idx]
-            meta = metas[idx]
-            
-            # Apply contextual reasoning (Culture Tropes + Contextual Parent Post Mismatch)
-            final_label, conf, ctx_fallback, reason = context_analyzer.analyze(
-                raw_t, pred["label"], pred["confidence"], context=ctx
-            )
-            
-            needs_fallback = ctx_fallback or (conf < req.confidence_threshold) or meta.get("sarcasm_detected", False)
+            d = decisions[idx]
+            meta = d["meta"]
+            # the deciding model's own view; used below to re-shape probabilities when a rule overrode it
+            pred = {"label": max(d["probabilities"], key=d["probabilities"].get),
+                    "probabilities": {k: round(v, 4) for k, v in d["probabilities"].items()}}
+            final_label, conf, ctx_fallback, reason = d["label"], d["confidence"], d["ctx_fallback"], d["reason"]
+
+            needs_fallback = (ctx_fallback or d["uncertain"] or (conf < req.confidence_threshold)
+                              or meta.get("sarcasm_detected", False))
             if meta.get("sarcasm_detected", False) and (not reason or reason == "model_inference"):
                 reason = "sarcasm_detected"
                 
@@ -319,7 +329,10 @@ async def predict_sentiment(req: SentimentPredictRequest):
                 fallback_result=fallback_res,
                 is_performance_issue=is_perf,
                 is_risk_complaint=is_risk,
-                is_mixed=is_mixed
+                is_mixed=is_mixed,
+                tier=d["tier"],
+                content_type=d["content_type"],
+                uncertain=d["uncertain"]
             )
             
             # Store into LRU cache (with context hashing)

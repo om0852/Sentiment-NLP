@@ -46,7 +46,14 @@ def test_single_predict_negative(client):
     assert item["label"] == "negative"
     assert item["confidence"] >= 0.60
 
-def test_batch_predict(client):
+def test_batch_predict(client, monkeypatch):
+    # Measure the engine's own latency, not the external fallback API's network round-trip.
+    import src.serving.app as app_module
+
+    async def no_network_fallback(text):
+        return {"resolved": False}
+
+    monkeypatch.setattr(app_module.fallback_service, "fallback_predict", no_network_fallback)
     posts = [
         "Bro this is a massive W 🙌",
         "Absolute garbage update, crashes every 5 seconds 🗑️",

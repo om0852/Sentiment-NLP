@@ -1,0 +1,14 @@
+{
+  "labels": [
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "max_len": 64,
+  "temperature": 0.8171,
+  "base_model": "microsoft/Multilingual-MiniLM-L12-H384",
+  "layers": 6,
+  "teacher": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+  "kept_vocab": 60004,
+  "val_accuracy_silver": 0.9125
+}
