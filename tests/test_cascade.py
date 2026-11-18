@@ -168,3 +168,26 @@ def test_disabled_rule_falls_back_to_model():
     off = ContextAnalyzer(disabled_rules=["meme_skill_issue"]).analyze(text, "positive", 0.8)
     assert on[3] == "meme_skill_issue" and on[0] == "negative"
     assert off[3] == "model_inference" and off[0] == "positive"
+
+
+def test_slang_dictionary_answer_is_kept():
+    c = Cascade(student=FakeStudent(), config=dict(DEFAULT_CONFIG, slang_keep_conf=0.6))
+    meta_pos = {"slang_polarity": 1.8}
+    # "op" (overpowered) recognised by the slang dictionary, tier 1 agrees and is confident -> keep tier 1
+    assert c.slang_backed("nothing can be this much op", "positive", 0.7, "model_inference", meta_pos, news=False)
+    # not when tier 1 disagrees with the slang direction, is unsure, the post is news, or has sarcasm cues
+    assert not c.slang_backed("nothing can be this much op", "negative", 0.9, "model_inference", meta_pos, news=False)
+    assert not c.slang_backed("nothing can be this much op", "positive", 0.5, "model_inference", meta_pos, news=False)
+    assert not c.slang_backed("Fire broke out in a factory", "positive", 0.9, "model_inference", meta_pos, news=True)
+    assert not c.slang_backed("Great, the app is fire 🙃", "positive", 0.9, "model_inference", meta_pos, news=False)
+    # off when not configured
+    off = Cascade(student=FakeStudent(), config=dict(DEFAULT_CONFIG))
+    assert not off.slang_backed("op bro", "positive", 0.99, "model_inference", meta_pos, news=False)
+
+
+def test_op_is_positive_end_to_end(tier1):
+    model, pipe, analyzer = tier1
+    cfg = dict(DEFAULT_CONFIG, slang_keep_conf=0.6, escalate_below=1.01)
+    res = classify_batch(["nothing can be this much op"], [None], model, pipe, analyzer,
+                         Cascade(student=FakeStudent(label="neutral", confidence=0.9), config=cfg))
+    assert res[0]["label"] == "positive" and res[0]["reason"] == "slang_dictionary"

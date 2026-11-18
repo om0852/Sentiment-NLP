@@ -13,5 +13,6 @@
   ],
   "rules_override_student": true,
   "english_expert_max_chars": 140,
-  "expert_overrides_rules": false
+  "expert_overrides_rules": false,
+  "slang_keep_conf": 0.6
 }

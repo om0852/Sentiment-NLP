@@ -43,6 +43,10 @@ DEFAULT_CONFIG = {
     # 0 disables it. Never used for news, non-Latin script or romanized Hinglish.
     "english_expert_max_chars": 0,
     "expert_overrides_rules": False,
+    # Keep the TF-IDF answer when the slang dictionary recognised a term ("op", "goated", "mid"...), TF-IDF agrees
+    # with the slang direction at >= this calibrated confidence, and the post is neither news nor sarcastic.
+    # The transformer tiers never learned most of this slang. 0 disables.
+    "slang_keep_conf": 0.0,
     "disabled_rules": [],
 }
 
@@ -219,6 +223,19 @@ class Cascade:
             return "non_latin_script"
         return "low_confidence"
 
+    def slang_backed(self, text: str, label: str, conf: float, tier1_reason: Optional[str], meta: Dict,
+                     news: bool) -> bool:
+        """True when the tier-1 answer is backed by the slang dictionary and should not be overridden."""
+        keep = self.cfg.get("slang_keep_conf", 0.0)
+        polarity = (meta or {}).get("slang_polarity", 0.0)
+        if not keep or not polarity or news or tier1_reason != "model_inference":
+            return False
+        if label not in ("positive", "negative") or (polarity > 0) != (label == "positive"):
+            return False
+        if has_sarcasm_cue(text):
+            return False
+        return conf >= keep
+
     def run_student(self, texts: List[str]) -> List[Dict]:
         return self.student.predict_batch(texts) if (self.student and texts) else []
 
@@ -269,6 +286,9 @@ def classify_batch(texts: List[str], contexts: List[Optional[str]], model, pipel
             "meta": metas[i], "ctx_fallback": ctx_fallback, "tier1_label": label,
         })
         if cascade is not None and clean[i].strip():  # blank posts stay on tier 1
+            if cascade.slang_backed(clean[i], label, conf, reason, metas[i], is_news):
+                results[-1]["reason"] = "slang_dictionary"
+                continue
             why_expert = cascade.expert_reason(clean[i], reason, is_news)
             if why_expert:
                 to_expert[i] = why_expert
