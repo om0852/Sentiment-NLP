@@ -101,7 +101,18 @@ async def lifespan(app: FastAPI):
             print(f"Transformer tier loaded from {student_dir}")
         except Exception as e:
             print(f"WARNING: transformer tier failed to load ({e}); serving TF-IDF only.")
-    cascade = Cascade(student=student)
+    # English expert: Twitter RoBERTa for short English social posts (DISABLE_ENGLISH_EXPERT=1 turns it off)
+    expert = None
+    expert_dir = os.path.join(project_root, "models", "english_expert")
+    if (student is not None and os.getenv("DISABLE_ENGLISH_EXPERT") != "1"
+            and StudentClassifier.available(expert_dir)):
+        try:
+            expert = StudentClassifier(expert_dir, threads=int(os.getenv("TRANSFORMER_THREADS", "1")))
+            expert.predict_batch(["warm up the english expert"])
+            print(f"English expert loaded from {expert_dir}")
+        except Exception as e:
+            print(f"WARNING: English expert failed to load ({e}); continuing without it.")
+    cascade = Cascade(student=student, expert=expert)
     news_probability(["warm up"])  # load the news detector before requests can race on it
 
     yield
@@ -239,7 +250,7 @@ async def predict_sentiment(req: SentimentPredictRequest):
                               or meta.get("sarcasm_detected", False))
             # an explicit sarcasm marker ("/s", "yeah right") is reported as the reason whichever tier answered
             if meta.get("sarcasm_detected", False) and (not reason or reason == "model_inference"
-                                                        or reason.startswith("transformer_")):
+                                                        or reason.startswith(("transformer_", "english_expert"))):
                 reason = "sarcasm_detected"
                 
             fallback_res = None

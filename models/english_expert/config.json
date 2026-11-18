@@ -1,0 +1,12 @@
+{
+  "labels": [
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "max_len": 128,
+  "temperature": 1.0119,
+  "source": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+  "pad_token": "<pad>",
+  "note": "English-only; used for short English social posts"
+}

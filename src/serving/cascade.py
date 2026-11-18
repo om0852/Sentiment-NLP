@@ -39,6 +39,10 @@ DEFAULT_CONFIG = {
     # measured: the student loses ~30 points on short Gen-Z/emoji/Hinglish posts but wins on longer ones
     "short_text_chars": 0,
     "keep_romanized_indic_on_tier1": False,
+    # English expert (Twitter RoBERTa): short English social posts, where it beats our multilingual student.
+    # 0 disables it. Never used for news, non-Latin script or romanized Hinglish.
+    "english_expert_max_chars": 0,
+    "expert_overrides_rules": False,
     "disabled_rules": [],
 }
 
@@ -162,10 +166,35 @@ def calibrate_tfidf(probabilities: Dict[str, float], temperature: float) -> Dict
 CONTEXT_RULES = ("context_mismatch_sarcasm", "context_reinforced_negative", "context_aligned_praise")
 
 
+_FANCY = re.compile("[\U0001D400-\U0001D7FF\u02B0-\u02FF\u1D2C-\u1D6A\u1D9B-\u1DBF\uFF01-\uFF5E\u2070-\u209F]")
+
+
+def fold_fancy(text: str) -> str:
+    """Map styled 'letters' (𝕓𝕒𝕕, 𝗕𝗘𝗦𝗧, ˢᵘᵖᵉʳ, full-width) to plain ones, which the transformer tiers can read.
+    Only applied when such characters are present, so ordinary Hindi/Marathi text is left untouched."""
+    import unicodedata
+    return unicodedata.normalize("NFKC", text) if _FANCY.search(text) else text
+
+
+def is_english_social(text: str, news: bool, max_chars: int) -> bool:
+    return (0 < len(text) < max_chars and not news and non_latin_share(text) <= 0.3
+            and not is_romanized_indic(text))
+
+
 class Cascade:
-    def __init__(self, student=None, config: Optional[Dict] = None):
+    def __init__(self, student=None, config: Optional[Dict] = None, expert=None):
         self.student = student
+        self.expert = expert
         self.cfg = config or load_config()
+
+    def expert_reason(self, text: str, tier1_reason: Optional[str], news: bool) -> Optional[str]:
+        """'english_expert' when the English model should answer this post."""
+        max_chars = self.cfg.get("english_expert_max_chars", 0)
+        if self.expert is None or not max_chars or tier1_reason in CONTEXT_RULES:
+            return None
+        if (not self.cfg.get("expert_overrides_rules") and tier1_reason not in (None, "model_inference")):
+            return None  # a hand-written rule decided
+        return "english_expert" if is_english_social(text, news, max_chars) else None
 
     def escalation_reason(self, text: str, tier1_conf: float, tier1_reason: Optional[str],
                           news: bool = False) -> Optional[str]:
@@ -192,6 +221,9 @@ class Cascade:
 
     def run_student(self, texts: List[str]) -> List[Dict]:
         return self.student.predict_batch(texts) if (self.student and texts) else []
+
+    def run_expert(self, texts: List[str]) -> List[Dict]:
+        return self.expert.predict_batch(texts) if (self.expert and texts) else []
 
     def is_uncertain(self, confidence: float) -> bool:
         return confidence < self.cfg["uncertain_below"]
@@ -220,11 +252,11 @@ def classify_batch(texts: List[str], contexts: List[Optional[str]], model, pipel
 
     cfg = cascade.cfg if cascade else DEFAULT_CONFIG
     temperature = cfg["tfidf_temperature"]
-    clean = [post_to_text(t) or t for t in texts]
+    clean = [fold_fancy(post_to_text(t) or t) for t in texts]
     # content_type is reported even when the transformer tier is off
     news_p = news_probability(clean)
 
-    results, escalate = [], {}
+    results, escalate, to_expert = [], {}, {}
     for i, (t, ctx, pred) in enumerate(zip(texts, contexts, preds)):
         cal = calibrate_tfidf(pred["probabilities"], temperature)
         base = max(cal, key=cal.get)
@@ -237,10 +269,21 @@ def classify_batch(texts: List[str], contexts: List[Optional[str]], model, pipel
             "meta": metas[i], "ctx_fallback": ctx_fallback, "tier1_label": label,
         })
         if cascade is not None and clean[i].strip():  # blank posts stay on tier 1
+            why_expert = cascade.expert_reason(clean[i], reason, is_news)
+            if why_expert:
+                to_expert[i] = why_expert
+                continue
 
             why = cascade.escalation_reason(clean[i], conf, reason, news=is_news)
             if why:
                 escalate[i] = why
+
+    if to_expert:
+        idx = list(to_expert)
+        for i, s in zip(idx, cascade.run_expert([clean[j] for j in idx])):
+            results[i].update(label=s["label"], confidence=s["confidence"], probabilities=s["probabilities"],
+                              reason="english_expert", tier="english_expert", ctx_fallback=False,
+                              uncertain=cascade.is_uncertain(s["confidence"]))
 
     if escalate:
         idx = list(escalate)

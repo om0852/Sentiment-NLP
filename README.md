@@ -1,16 +1,16 @@
 # ⚡ Ultra-Lightweight Pragmatic Sentiment Engine
 
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![RAM Footprint](https://img.shields.io/badge/RAM-281MB%20peak-success.svg)]()
+[![RAM Footprint](https://img.shields.io/badge/RAM-549MB%20peak-success.svg)]()
 [![CPU](https://img.shields.io/badge/CPU-1%20core%20(~870k%20posts%2Fday)-success.svg)]()
 [![Cost](https://img.shields.io/badge/Cloud%20Cost-%240.00%2Fmo%20(Free%20Tier)-brightgreen.svg)]()
-[![TweetEval](https://img.shields.io/badge/TweetEval%20(held--out)-67.1%25-orange.svg)]()
+[![TweetEval](https://img.shields.io/badge/TweetEval%20(held--out)-71.6%25-orange.svg)]()
 [![300k Evaluation](https://img.shields.io/badge/Production%20300k%20Stream-923%20posts%2Fsec-blue.svg)]()
 [![Live Deployment](https://img.shields.io/badge/Railway-Live%20Production-success.svg)](https://sentiment-nlp-production.up.railway.app/)
 
 A production-grade, ultra-lightweight sentiment analysis microservice specialized in modern social vernacular (**Gen-Z slang, multi-modal emojis, complex negations, contrastive clauses, Hinglish, cultural disaster tropes, and thread-context sarcasm**).
 
-Runs in **~280 MB RAM** on **one CPU core** (~870k posts/day with the transformer tier; 10M+/day with `DISABLE_TRANSFORMER=1`), e.g. on an Oracle Cloud Always Free ARM instance.
+Runs in **~550 MB RAM** on **one CPU core** (~870k posts/day with all tiers; 10M+/day with `DISABLE_TRANSFORMER=1`), e.g. on an Oracle Cloud Always Free ARM instance.
 
 ---
 
@@ -25,27 +25,34 @@ Runs in **~280 MB RAM** on **one CPU core** (~870k posts/day with the transforme
 
 ## 📊 Accuracy & Performance (measured 2026-11-18)
 
-Two tiers: the original TF-IDF model + hand-written rules, and a distilled multilingual transformer
-(12-layer MiniLM, 128 tokens, int8 ONNX) trained on ~16k of our real posts labelled by an LLM (Codex, ~89% agreement
-with careful manual labels) plus TweetEval. Almost every post goes to the transformer. The fast tier keeps posts under
-25 characters, romanized Hinglish/Maranglish, posts where a hand-written rule fires, and posts it is ≥90% sure about
-(e.g. dictionary-backed Hindi/Marathi). See [docs/ACCURACY_PIPELINE.md](docs/ACCURACY_PIPELINE.md).
+Three tiers, chosen per post by `src/serving/cascade.py`:
 
-| Accuracy (3-class, data no model was trained on) | Original | v1 (PR #1) | **Now** |
-| :--- | :--- | :--- | :--- |
-| **Real posts from our data** (182 random posts, labelled per the guide by Claude, not yet by humans) | 41.2% | 59.9% | **78.6%** |
-| ↳ on posts not flagged `uncertain` (80% of posts) | n/a | 64.1% | **84.9%** |
-| **TweetEval sentiment test** (12,284 tweets, human labels) | 59.4% | 63.4% | **67.1%** |
-| ↳ on posts not flagged `uncertain` (76% of posts) | n/a | 69.9% | **73.0%** |
-| Hand-written real-world style sets (174 + 126 posts) | 66.7% / 62.7% | 67.2% / 65.1% | 68.4% / 63.5% |
-| Hard sets (`benchmark_hard_50.py`, `benchmark_hard_set_2.py`) | 38% / 44% | 42% / 32% | 40% / 20% |
+| Tier | Model | Gets |
+| :--- | :--- | :--- |
+| `transformer` | 12-layer multilingual MiniLM (int8 ONNX, 45 MB), trained on ~16k of our real posts labelled by Codex (~89% agreement with careful manual labels) + TweetEval | Most posts: long posts, news, Hindi/Marathi and other scripts |
+| `english_expert` | `cardiffnlp/twitter-roberta-base-sentiment-latest` (int8 ONNX, 125 MB in 3 parts) | Short English social posts (< 140 chars, Latin script, not Hinglish, not news) |
+| `tfidf` | Original TF-IDF + hand-written rules | Posts where a rule fires, romanized Hinglish, tiny posts, posts it is ≥90% sure about |
 
-| Resource | Measured (laptop CPU, 1 thread) |
+See [docs/ACCURACY_PIPELINE.md](docs/ACCURACY_PIPELINE.md) for how each piece is built and measured.
+
+| Accuracy (3-class, held-out data) | Original | v1 | v2 | **Now** | roberta-latest alone | tabularisai alone |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Real posts from our data** (182 random, labelled per the guide by Claude) | 41.2% | 59.9% | 78.6% | **78.6%** | 59.9% | 54.4% |
+| ↳ Hindi/Marathi script (33) | — | — | 78.8% | **78.8%** | 39.4% | 57.6% |
+| **Real posts, Codex labels** (651 never trained on) | 43.5% | 58.5% | 74.3% | **76.0%** | 63.6% | 49.6% |
+| ↳ Hindi/Marathi script (119) | — | — | 81.5% | **81.5%** | 34.5% | 44.5% |
+| **TweetEval sentiment test** (12,284, human labels) | 59.4% | 63.4% | 67.3% | **71.6%** | 72.2% | 57.5% |
+| Hand-written real-world style sets (174 / 126) | 66.7% / 62.7% | 67.2% / 65.1% | 69.0% / 61.9% | **78.2% / 73.0%** | 76.4% / 70.6% | 54.0% / 61.1% |
+| Hard sets (`benchmark_hard_50.py` / `_set_2.py`) | 38% / 44% | 42% / 32% | 40% / 20% | **54%** / 36% | 50% / 46% | 42% / 42% |
+
+Reproduce with `python scripts/benchmark_external_models.py` (it downloads the two comparison models).
+
+| Resource (laptop CPU, 1 thread, 600 random real posts) | Measured |
 | :--- | :--- |
-| Runtime memory (RSS, both tiers loaded) | **275 MB at startup, 281 MB peak** |
-| CPU per post (real-post mix) | **~100 ms** (TF-IDF tier alone: ~1 ms) |
-| Capacity | **~870k posts/day per CPU core**. Fits one Oracle Always Free Ampere core (1 OCPU / 6 GB, see [deploy/oracle](deploy/oracle/README.md)); `DISABLE_TRANSFORMER=1` gives 10M+/day at lower accuracy |
-| Model files on disk | 45 MB transformer + 4 MB tokenizer + 1 MB news detector + 1 MB TF-IDF |
+| Runtime memory (RSS, all tiers loaded) | **536 MB at startup, 549 MB peak** |
+| CPU per post | **~100 ms** (83% transformer, 14% English expert, 3% TF-IDF) |
+| Capacity | **~870k posts/day per CPU core**. Fits an Oracle Always Free Ampere core (1 OCPU / 6 GB, see [deploy/oracle](deploy/oracle/README.md)) |
+| Lighter modes | `DISABLE_ENGLISH_EXPERT=1` (~280 MB); `DISABLE_TRANSFORMER=1` (TF-IDF only, ~1 ms/post, 10M+/day, much lower accuracy) |
 
 > **Note on accuracy numbers (corrected 2026-11-17).** Earlier versions of this README claimed 100/100 on the hard
 > benchmarks and 73.16% on TweetEval. The hard-benchmark result does not reproduce on the committed code, and the
@@ -55,14 +62,14 @@ with careful manual labels) plus TweetEval. Almost every post goes to the transf
 > The number to trust most will be the **human-labelled gold set** (`data/gold/gold_sample.csv`, 1,500 random real
 > posts, see [docs/LABELLING_GUIDE.md](docs/LABELLING_GUIDE.md)); run `python scripts/evaluate_gold.py` once it's labelled.
 >
-> **Known weak spots:** sarcasm/meme templates (hard set 2: 20%) and some short slang the transformer reads as
-> neutral, e.g. "Uninstalling immediately #BoycottApp" (the one failing test in `tests/`).
+> **Known weak spot:** sarcasm/meme templates (hard set 2: 36%; roberta alone 46%). Tried and rejected: training one
+> model on both Codex and roberta labels (v3: better at English slang, but −7 points on our real posts).
 
 ### New response fields
 
 | Field | Meaning |
 | :--- | :--- |
-| `tier` | `tfidf` (fast tier) or `transformer` |
+| `tier` | `tfidf` (fast tier), `transformer` (multilingual) or `english_expert` (short English posts) |
 | `content_type` | `news` for factual reporting / headlines, else `social` |
 | `uncertain` | Transformer's calibrated confidence is below `uncertain_below` (0.6). Route to a person or an LLM |
 

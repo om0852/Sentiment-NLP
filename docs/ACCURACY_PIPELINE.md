@@ -34,6 +34,11 @@ python scripts/train_student.py --layers 12 --max-len 128 --epochs 3 --batch 32 
 #    resume after an interruption from a saved state_dict:
 #    python scripts/train_student.py --epochs 0.9 --lr 4e-5 --layers 6 --max-len 64 --resume path/to/best.pt
 
+# 3b. English expert for short English social posts: cardiffnlp twitter-roberta-base-sentiment-latest -> int8 ONNX parts
+python scripts/export_english_expert.py
+#    Compare against off-the-shelf models on every held-out set:
+python scripts/benchmark_external_models.py --extra path/to/labelled_set.py
+
 # 6. News / factual-reporting detector (RSS vs social posts)
 python scripts/train_news_detector.py
 

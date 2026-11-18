@@ -20,11 +20,13 @@ data_files = [
     f"data/silver/token_counts_{key}.json",
     "data/silver/teacher_labels.jsonl",
     "data/silver/llm_codex.jsonl",
+    "data/silver/extra_english.jsonl",
     "data/gold/gold_ids.json",
 ] + [f"data/raw/tweeteval/{s}_{k}.txt" for s in ("train", "val") for k in ("text", "labels")]
 
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-    z.write(os.path.join(repo, "scripts", "train_student.py"), "scripts/train_student.py")
+    for script in ("train_student.py", "teacher_soft_labels.py"):
+        z.write(os.path.join(repo, "scripts", script), f"scripts/{script}")
     for path in glob.glob(os.path.join(repo, "src", "**", "*.py"), recursive=True):
         z.write(path, os.path.relpath(path, repo).replace(os.sep, "/"))
     for rel in data_files:

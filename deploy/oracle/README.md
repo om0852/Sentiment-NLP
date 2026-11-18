@@ -1,9 +1,9 @@
 # Deploying on Oracle Cloud (Always Free, ARM, 1 OCPU / 6 GB)
 
-The engine needs ~280 MB RAM and, with the 12-layer transformer, ~100 ms of CPU per real post (long news posts use
-all 128 tokens), so one core handles roughly **10 posts/second (~870k posts/day)**. That was measured on an Intel
+The engine needs ~550 MB RAM (all three tiers) and ~100 ms of CPU per real post (long news posts use all 128
+tokens), so one core handles roughly **10 posts/second (~870k posts/day)**. That was measured on an Intel
 laptop core; Ampere cores differ, so check on your instance with step 3. If you need more throughput, set
-`DISABLE_TRANSFORMER=1` (TF-IDF tier only: ~1 ms/post, much lower accuracy).
+`DISABLE_TRANSFORMER=1` (TF-IDF tier only: ~1 ms/post, much lower accuracy). `DISABLE_ENGLISH_EXPERT=1` saves ~270 MB.
 
 ## 1. One-time setup on the instance (Ubuntu 22.04/24.04 image)
 

@@ -11,5 +11,7 @@
   "disabled_rules": [
     "cultural_disaster_metaphor"
   ],
-  "rules_override_student": true
+  "rules_override_student": true,
+  "english_expert_max_chars": 140,
+  "expert_overrides_rules": false
 }

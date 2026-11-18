@@ -135,9 +135,14 @@ class Engine:
         sdir = os.path.join(project_root, "models", "student")
         if use_student and StudentClassifier.available(sdir):
             self.student = MemoStudent(StudentClassifier(sdir, threads=1))
+        self.expert = None
+        edir = os.path.join(project_root, "models", "english_expert")
+        if use_student and StudentClassifier.available(edir):
+            self.expert = MemoStudent(StudentClassifier(edir, threads=1))
 
     def run(self, items, cfg, analyzer, use_student=True, bs=64):
-        cascade = Cascade(student=self.student if use_student else None, config=cfg)
+        cascade = Cascade(student=self.student if use_student else None, config=cfg,
+                          expert=self.expert if use_student else None)
         out = []
         for i in range(0, len(items), bs):
             chunk = items[i: i + bs]

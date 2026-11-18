@@ -16,6 +16,30 @@ import numpy as np
 from src.models.calibration import softmax
 
 
+def _parts(model_dir: str) -> List[str]:
+    """Large models are stored as model.int8.onnx.part00, part01, ... (GitHub's 100 MB per-file limit)."""
+    import glob
+    return sorted(glob.glob(os.path.join(model_dir, "model.int8.onnx.part*")))
+
+
+def _model_source(model_dir: str):
+    path = os.path.join(model_dir, "model.int8.onnx")
+    if os.path.exists(path):
+        return path
+    parts = _parts(model_dir)
+    expected = [os.path.join(model_dir, f"model.int8.onnx.part{i:02d}") for i in range(len(parts))]
+    if not parts or [os.path.normcase(p) for p in parts] != [os.path.normcase(p) for p in expected]:
+        raise FileNotFoundError(f"model parts in {model_dir} are missing or not numbered part00..: {parts}")
+    data = bytearray()
+    for part in parts:
+        with open(part, "rb") as f:
+            chunk = f.read()
+        if not chunk:
+            raise ValueError(f"empty model part {part}")
+        data += chunk
+    return bytes(data)
+
+
 class StudentClassifier:
     def __init__(self, model_dir: str, threads: int = 1):
         import onnxruntime as ort
@@ -37,13 +61,11 @@ class StudentClassifier:
         opts.inter_op_num_threads = 1
         opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         opts.enable_cpu_mem_arena = False  # the arena keeps ~40 MB of peak buffers around; we're RAM-bound
-        self.session = ort.InferenceSession(
-            os.path.join(model_dir, "model.int8.onnx"), opts, providers=["CPUExecutionProvider"]
-        )
+        self.session = ort.InferenceSession(_model_source(model_dir), opts, providers=["CPUExecutionProvider"])
 
     @staticmethod
     def available(model_dir: str) -> bool:
-        return os.path.exists(os.path.join(model_dir, "model.int8.onnx"))
+        return os.path.exists(os.path.join(model_dir, "model.int8.onnx")) or bool(_parts(model_dir))
 
     def logits(self, texts: List[str]) -> np.ndarray:
         if not texts:

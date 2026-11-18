@@ -29,7 +29,7 @@ data_root = os.environ.get("SENTIMENT_DATA_ROOT", project_root)
 sys.path.insert(0, project_root)
 
 from src.models.calibration import fit_temperature  # noqa: E402
-from src.preprocessing.post_text import post_to_text  # noqa: E402
+from src.preprocessing.post_text import _norm, post_to_text  # noqa: E402
 
 STUDENT = "microsoft/Multilingual-MiniLM-L12-H384"
 TOKENIZER_SRC = "cardiffnlp/twitter-xlm-roberta-base-sentiment"  # same XLM-R sentencepiece vocab
@@ -59,7 +59,7 @@ def load_llm_labels(paths):
     return labels
 
 
-def load_data(llm_paths=(), silver_mode="agree"):
+def load_data(llm_paths=(), silver_mode="agree", extra_teacher="", extra_min_conf=0.8):
     """Training rows from real posts plus TweetEval train/val.
 
     For each real post: an LLM label (if any) wins; the teacher's soft probabilities are kept only when the teacher
@@ -98,6 +98,30 @@ def load_data(llm_paths=(), silver_mode="agree"):
             for t, l in zip(ft, fl):
                 dest.append({"text": t.strip(), "label": te_map[int(l)], "soft": None, "src": "tweeteval"})
     print(f"with TweetEval: train {len(train):,} val {len(val):,} calib {len(calib):,}", flush=True)
+
+    # Second teacher (scripts/teacher_soft_labels.py): English Twitter RoBERTa probabilities.
+    # On labelled rows its probabilities replace the soft target only where it agrees with the label;
+    # extra unlabelled English posts join training only where it is confident. Val/calib are never touched.
+    if extra_teacher and os.path.exists(extra_teacher):
+        soft = {}
+        with open(extra_teacher, encoding="utf-8") as f:
+            for line in f:
+                r = json.loads(line)
+                soft[r["key"]] = (r["probs"], r["src"], r["text"])
+        agreed = 0
+        for item in train:
+            hit = soft.get(_norm(item["text"]))
+            if hit and max(range(3), key=hit[0].__getitem__) == item["label"]:
+                item["soft"] = hit[0]
+                agreed += 1
+        added = 0
+        for probs, src, text in soft.values():
+            if src == "extra_english" and max(probs) >= extra_min_conf:
+                train.append({"text": text, "label": max(range(3), key=probs.__getitem__), "soft": probs,
+                              "src": "roberta"})
+                added += 1
+        print(f"second teacher: soft targets on {agreed:,} labelled rows; added {added:,} confident extra English "
+              f"posts -> train {len(train):,}", flush=True)
     return train, val, calib
 
 
@@ -128,6 +152,9 @@ def main():
     ap.add_argument("--silver-mode", choices=["agree", "none"], default="agree",
                     help="use teacher+DB-agreement posts that have no LLM label")
     ap.add_argument("--out-dir", default="", help="where to write the model (default models/student)")
+    ap.add_argument("--extra-teacher", default="", help="data/silver/roberta_soft.jsonl from scripts/teacher_soft_labels.py")
+    ap.add_argument("--extra-min-conf", type=float, default=0.8,
+                    help="extra unlabelled posts join training only when the second teacher is this confident")
     args = ap.parse_args()
 
     import torch
@@ -145,7 +172,7 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     tok = AutoTokenizer.from_pretrained(TOKENIZER_SRC)
-    train, val, calib = load_data(args.llm_labels, args.silver_mode)
+    train, val, calib = load_data(args.llm_labels, args.silver_mode, args.extra_teacher, args.extra_min_conf)
     if args.max_train:
         random.shuffle(train)
         train = train[: args.max_train]
