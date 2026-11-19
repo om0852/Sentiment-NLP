@@ -18,9 +18,21 @@ class ContextAnalyzer:
     10. Advanced Sarcasm (Conditional traps, faux gratitude, passive-aggressive shoutouts)
     11. Precision & Nuance (Objective news wires, betting tables & catalog neutralizer)
     """
-    def __init__(self):
+    def __init__(self, disabled_rules: Optional[List[str]] = None):
         # 1. Load cultural tropes dictionary
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+        # Rules switched off by measurement (step 7). Defaults to models/cascade_config.json.
+        if disabled_rules is None:
+            disabled_rules = []
+            cfg_path = os.path.join(project_root, "models", "cascade_config.json")
+            if os.path.exists(cfg_path):
+                try:
+                    with open(cfg_path, "r", encoding="utf-8") as f:
+                        disabled_rules = json.load(f).get("disabled_rules", [])
+                except Exception:
+                    pass
+        self.disabled_rules = set(disabled_rules)
         tropes_path = os.path.join(project_root, "data", "dictionaries", "culture_tropes_dict.json")
         if not os.path.exists(tropes_path):
             tropes_path = os.path.join(os.getcwd(), "data", "dictionaries", "culture_tropes_dict.json")
@@ -343,8 +355,20 @@ class ContextAnalyzer:
 
         return False
 
-    def analyze(self, raw_text: str, base_label: str, base_confidence: float, 
+    def analyze(self, raw_text: str, base_label: str, base_confidence: float,
                 context: Optional[str] = None, aspects: Optional[Dict[str, str]] = None) -> Tuple[str, float, bool, str]:
+        """Apply the hand-written rules on top of the model's label.
+
+        Rules listed in `self.disabled_rules` (step 7: measured to hurt more than help, see
+        scripts/ablate_rules.py) fall back to the model's own answer instead.
+        """
+        result = self._apply_rules(raw_text, base_label, base_confidence, context=context, aspects=aspects)
+        if result[3] in self.disabled_rules:
+            return base_label.lower(), base_confidence, (base_confidence < 0.60), "model_inference"
+        return result
+
+    def _apply_rules(self, raw_text: str, base_label: str, base_confidence: float,
+                     context: Optional[str] = None, aspects: Optional[Dict[str, str]] = None) -> Tuple[str, float, bool, str]:
         raw_lower = raw_text.lower()
 
         # 0. Contextual Parent / Thread Mismatch Check

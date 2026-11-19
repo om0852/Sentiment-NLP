@@ -644,6 +644,17 @@
       }
     }
 
+    function storedApiKey() {
+      try { return localStorage.getItem('sentimentApiKey') || ''; } catch (e) { return ''; }
+    }
+
+    function postPredict(payload, key) {
+      const apiKey = key || storedApiKey();
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['X-API-Key'] = apiKey;
+      return fetch('/predict', { method: 'POST', headers: headers, body: JSON.stringify(payload) });
+    }
+
     async function analyzePost() {
       const text = document.getElementById('input-text').value.trim();
       const ctx = document.getElementById('input-context').value.trim();
@@ -659,11 +670,18 @@
         : { texts: [text], extract_aspects: true, enable_fallback: false };
 
       try {
-        const resp = await fetch('/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        let resp = await postPredict(payload);
+        if (resp.status === 401) {
+          // The server requires an API key: ask once, remember it in this browser only.
+          const key = window.prompt('This server requires an API key. Enter it to use the dashboard:');
+          if (!key) throw new Error('API key required');
+          try { localStorage.setItem('sentimentApiKey', key.trim()); } catch (e) {}
+          resp = await postPredict(payload, key.trim());
+          if (resp.status === 401) {
+            try { localStorage.removeItem('sentimentApiKey'); } catch (e) {}
+            throw new Error('Invalid API key');
+          }
+        }
         const data = await resp.json();
         const res = data.results[0];
         const elapsed = (performance.now() - t0).toFixed(1);

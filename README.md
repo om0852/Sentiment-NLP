@@ -1,16 +1,16 @@
 # ⚡ Ultra-Lightweight Pragmatic Sentiment Engine
 
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![RAM Footprint](https://img.shields.io/badge/RAM%20Budget-%3C300MB%20(Actual:%20125MB)-success.svg)]()
-[![vCPU Budget](https://img.shields.io/badge/CPU%20Budget-0.1%20vCPU-success.svg)]()
+[![RAM Footprint](https://img.shields.io/badge/RAM-549MB%20peak-success.svg)]()
+[![CPU](https://img.shields.io/badge/CPU-1%20core%20(~870k%20posts%2Fday)-success.svg)]()
 [![Cost](https://img.shields.io/badge/Cloud%20Cost-%240.00%2Fmo%20(Free%20Tier)-brightgreen.svg)]()
-[![Benchmark Hard Sets](https://img.shields.io/badge/Hard%20Benchmarks-100%2F100%20(100%25)-brightgreen.svg)]()
+[![TweetEval](https://img.shields.io/badge/TweetEval%20(held--out)-71.6%25-orange.svg)]()
 [![300k Evaluation](https://img.shields.io/badge/Production%20300k%20Stream-923%20posts%2Fsec-blue.svg)]()
 [![Live Deployment](https://img.shields.io/badge/Railway-Live%20Production-success.svg)](https://sentiment-nlp-production.up.railway.app/)
 
 A production-grade, ultra-lightweight sentiment analysis microservice specialized in modern social vernacular (**Gen-Z slang, multi-modal emojis, complex negations, contrastive clauses, Hinglish, cultural disaster tropes, and thread-context sarcasm**).
 
-Operating strictly within **$\le 300\text{ MB}$ RAM** and **$\le 0.1\text{ vCPU}$**, processing **$100,000\text{ to }1,000,000+\text{ posts/day}$** at **$\$0.00\text{ cloud cost}$**.
+Runs in **~550 MB RAM** on **one CPU core** (~870k posts/day with all tiers; 10M+/day with `DISABLE_TRANSFORMER=1`), e.g. on an Oracle Cloud Always Free ARM instance.
 
 ---
 
@@ -23,22 +23,86 @@ Operating strictly within **$\le 300\text{ MB}$ RAM** and **$\le 0.1\text{ vCPU}
 
 ---
 
-## 📊 Key Achievements & Performance Metrics
+## 📊 Accuracy & Performance (measured 2026-11-18)
 
-| Metric | Budget / Target | Measured In Production | Safety Headroom |
-| :--- | :--- | :--- | :--- |
-| **Hard Benchmark Accuracy** | $\ge 85.0\%$ | **100.0% (100 / 100 passed)** | Outperformed 70B LLMs |
-| **1,000 Boundary Stress Test**| $\ge 90.0\%$ | **100.0% (1,000 / 1,000 passed)** | 10 complex NLP failure modes |
-| **300k Real MongoDB Stream**  | 300,000 posts | **923 posts / sec (325.0s total)** | 158.7k exact / 141.2k refined |
-| **Statistical Latency** | $< 2.0\text{ ms}$ | **0.058 - 0.087 ms** | **$23\times$ faster** |
-| **End-to-End Latency** | $< 10.0\text{ ms}$ | **1.08 - 1.56 ms** | **$6.4\times$ faster** |
-| **LRU Cache Hit Latency** | $< 0.5\text{ ms}$ | **0.069 ms** | **$28.4\times$ speedup** |
-| **Throughput (1 Core)** | $> 200\text{ posts/s}$ | **1,683 posts / second** | **$8.4\times$ higher** |
-| **Throughput (0.1 vCPU)** | $\sim 11.6\text{ posts/s}$ ($10\text{L/day}$) | **168.3 posts / second** | **$14.5\times$ daily target** |
-| **TweetEval Benchmark (12.2k)** | $\ge 70.0\%$ | **73.16% Accuracy (0.7281 Macro F1)** | Matches CardiffNLP Twitter-RoBERTa (72.9%) |
-| **Runtime Memory (RSS)** | $\le 300\text{ MB}$ | **125.2 MB (local) / 148.7 MB (Railway)** | **$2.0\times$ under budget** |
-| **Model Disk Footprint** | $\le 25\text{ MB}$ | **1.08 MB** | **$23.1\times$ smaller** |
-| **Operating Cost** | Budget $\le \$0.00$ | **$0.00 / month** | 100% Free-Tier |
+Three tiers, chosen per post by `src/serving/cascade.py`:
+
+| Tier | Model | Gets |
+| :--- | :--- | :--- |
+| `transformer` | 12-layer multilingual MiniLM (int8 ONNX, 45 MB), v4: trained on ~35k listening posts across all clients and platforms labelled by Claude, ~16k real posts labelled by Codex, and TweetEval | Most posts: long posts, news, Hindi/Marathi and other scripts |
+| `english_expert` | `cardiffnlp/twitter-roberta-base-sentiment-latest` (int8 ONNX, 125 MB in 3 parts) | Short English social posts (< 140 chars, Latin script, not Hinglish, not news) |
+| `tfidf` | Original TF-IDF + hand-written rules | Posts where a rule fires, romanized Hinglish, tiny posts, posts it is ≥90% sure about |
+
+See [docs/ACCURACY_PIPELINE.md](docs/ACCURACY_PIPELINE.md) for how each piece is built and measured.
+
+| Accuracy (3-class, held-out data) | Original | v1 | v2 | **Now** | roberta-latest alone | tabularisai alone |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Real posts from our data** (182 random, labelled per the guide by Claude) | 41.2% | 59.9% | 78.6% | **78.6%** | 59.9% | 54.4% |
+| ↳ Hindi/Marathi script (33) | — | — | 78.8% | **78.8%** | 39.4% | 57.6% |
+| **Real posts, Codex labels** (651 never trained on) | 43.5% | 58.5% | 74.3% | **76.0%** | 63.6% | 49.6% |
+| ↳ Hindi/Marathi script (119) | — | — | 81.5% | **81.5%** | 34.5% | 44.5% |
+| **TweetEval sentiment test** (12,284, human labels) | 59.4% | 63.4% | 67.3% | **71.6%** | 72.2% | 57.5% |
+| Hand-written real-world style sets (174 / 126) | 66.7% / 62.7% | 67.2% / 65.1% | 69.0% / 61.9% | **78.2% / 73.0%** | 76.4% / 70.6% | 54.0% / 61.1% |
+| Hard sets (`benchmark_hard_50.py` / `_set_2.py`) | 38% / 44% | 42% / 32% | 40% / 20% | **54%** / 36% | 50% / 46% | 42% / 42% |
+
+Reproduce with `python scripts/benchmark_external_models.py` (it downloads the two comparison models).
+The table above was measured with the v2 transformer; v4 results follow.
+
+**v4 transformer (2026-11-19).** Retrained on ~38k fresh listening posts (Apr–May 2026, every client and platform),
+labelled by Claude agents per the labelling guide, not by the stored library labels (which agree with Claude only 51% of the time).
+Two independent Claude labellers agreed on 93.5% of a 2,000-post pilot. Scored on 1,000 random posts from the same
+export that were held out of training:
+
+| Accuracy, 3-class | v2 | **v4** |
+| :--- | :--- | :--- |
+| **Fresh listening posts, all clients** (1,000 held out), light mode as deployed | 70.8% | **80.4%** |
+| ↳ same, full mode (+ English expert) | 71.1% | 78.6% |
+| Older listening export (142, Claude labels), light | 74.6% | 76.1% |
+| Real posts, Codex labels (651), light / full | 74.5% / 76.2% | 75.6% / 77.3% |
+| Real posts, Claude labels (182), light / full | 78.0% / 77.5% | 76.9% / 76.9% |
+| TweetEval test (12,284), light / full | 67.2% / 71.4% | 67.2% / 71.4% |
+| Hard sets 1 / 2, full | 52% / 38% | 52% / 40% |
+
+Most of v4's gain comes from fixing posts that v2 wrongly called neutral: positive→neutral errors fell from 128 to 63 and negative→neutral from 73 to 41.
+In this table, a prediction counts as right when it matches any label the set allows. That rule differs slightly from the table above,
+so compare numbers within a table, not across tables.
+
+| Resource (laptop CPU, 1 thread, 600 random real posts) | Measured |
+| :--- | :--- |
+| Runtime memory (RSS, all tiers loaded) | **536 MB at startup, 549 MB peak** |
+| CPU per post | **~100 ms** (83% transformer, 14% English expert, 3% TF-IDF) |
+| Capacity | **~870k posts/day per CPU core**. Fits an Oracle Always Free Ampere core (1 OCPU / 6 GB, see [deploy/oracle](deploy/oracle/README.md)) |
+| Lighter modes | `DISABLE_ENGLISH_EXPERT=1` (~280 MB); `DISABLE_TRANSFORMER=1` (TF-IDF only, ~1 ms/post, 10M+/day, much lower accuracy) |
+
+> **Note on accuracy numbers (corrected 2026-11-17).** Earlier versions of this README claimed 100/100 on the hard
+> benchmarks and 73.16% on TweetEval. The hard-benchmark result does not reproduce on the committed code, and the
+> TweetEval figure came from a model that had been trained on the TweetEval test split. Training now excludes that
+> split, and every number above is measured on data no model was trained on.
+>
+> The number to trust most will be the **human-labelled gold set** (`data/gold/gold_sample.csv`, 1,500 random real
+> posts, see [docs/LABELLING_GUIDE.md](docs/LABELLING_GUIDE.md)); run `python scripts/evaluate_gold.py` once it's labelled.
+>
+> **Known weak spot:** sarcasm/meme templates (hard set 2: 36%; roberta alone 46%). Tried and rejected: training one
+> model on both Codex and roberta labels (v3: better at English slang, but −7 points on our real posts).
+
+### Authentication
+
+Set `SENTIMENT_API_KEYS` (comma-separated) to require `X-API-Key: <key>` (or `Authorization: Bearer <key>`) on all data
+endpoints. Without it the API is open, as before. `/health` and the dashboard page are always public. See
+[deploy/oracle/README.md](deploy/oracle/README.md#api-keys-recommended-for-any-public-deployment).
+
+### New response fields
+
+| Field | Meaning |
+| :--- | :--- |
+| `tier` | `tfidf` (fast tier), `transformer` (multilingual) or `english_expert` (short English posts) |
+| `content_type` | `news` for factual reporting / headlines, else `social` |
+| `uncertain` | Transformer's calibrated confidence is below `uncertain_below` (0.6). Route to a person or an LLM |
+
+Confidence is now **calibrated** (temperature scaling), so it is lower than before for the TF-IDF tier: 0.6 really means
+about 60% likely to be right. A side effect: more posts fall under the default `confidence_threshold` of 0.60 and get
+`fallback_required: true` (about 20–30% of posts, vs ~21% before). If you call the API
+with `enable_fallback: true`, that means more calls to the fallback service.
 
 ---
 
@@ -166,7 +230,10 @@ python scripts/benchmark_hard_50.py
 # 3. Run Hard Set 2 (Memes, Sarcasm, Pop-Culture Lore - 50 samples)
 python scripts/benchmark_hard_set_2.py
 
-# 4. Run automated test suite
+# 4. Run the held-out TweetEval benchmark (data/ is gitignored; point at the checkout that has it)
+SENTIMENT_DATA_ROOT=/path/to/checkout/with/data python scripts/benchmark_tweeteval.py
+
+# 5. Run automated test suite
 pytest tests/
 ```
 

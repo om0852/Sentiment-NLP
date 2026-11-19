@@ -1,0 +1,18 @@
+{
+  "tfidf_temperature": 2.7026,
+  "escalate_below": 0.9,
+  "uncertain_below": 0.6,
+  "escalate_news": true,
+  "news_threshold": 0.7,
+  "escalate_sarcasm_cues": true,
+  "escalate_non_latin": true,
+  "short_text_chars": 25,
+  "keep_romanized_indic_on_tier1": true,
+  "disabled_rules": [
+    "cultural_disaster_metaphor"
+  ],
+  "rules_override_student": true,
+  "english_expert_max_chars": 140,
+  "expert_overrides_rules": false,
+  "slang_keep_conf": 0.6
+}

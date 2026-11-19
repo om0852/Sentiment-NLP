@@ -7,6 +7,16 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.serving.app import app
 
+# Resource budgets. TF-IDF-only mode (DISABLE_TRANSFORMER=1) keeps the original strict budget (300 MB, 0.1 vCPU).
+# With the transformer + English expert loaded, the target is one CPU core / 6 GB (e.g. Oracle Always Free ARM).
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_HAS_TRANSFORMER = any(os.path.exists(os.path.join(_ROOT, "models", "student", f))
+                       for f in ("model.int8.onnx", "model.int8.onnx.part00"))
+LIGHT_MODE = os.getenv("DISABLE_TRANSFORMER") == "1" or not _HAS_TRANSFORMER
+RAM_BUDGET_MB = float(os.getenv("SENTIMENT_RAM_BUDGET_MB", "300" if LIGHT_MODE else "1024"))
+BATCH5_BUDGET_MS = float(os.getenv("SENTIMENT_BATCH5_BUDGET_MS", "50" if LIGHT_MODE else "600"))
+
+
 @pytest.fixture(scope="module")
 def client():
     with TestClient(app) as test_client:
@@ -18,7 +28,7 @@ def test_health_check(client):
     data = response.json()
     assert data["status"] == "healthy"
     assert data["model_loaded"] is True
-    assert data["memory_rss_mb"] < 300.0  # Strict RAM budget verification!
+    assert data["memory_rss_mb"] < RAM_BUDGET_MB  # RAM budget for the active mode (see top of file)
 
 def test_single_predict_positive(client):
     payload = {
@@ -46,7 +56,14 @@ def test_single_predict_negative(client):
     assert item["label"] == "negative"
     assert item["confidence"] >= 0.60
 
-def test_batch_predict(client):
+def test_batch_predict(client, monkeypatch):
+    # Measure the engine's own latency, not the external fallback API's network round-trip.
+    import src.serving.app as app_module
+
+    async def no_network_fallback(text):
+        return {"resolved": False}
+
+    monkeypatch.setattr(app_module.fallback_service, "fallback_predict", no_network_fallback)
     posts = [
         "Bro this is a massive W 🙌",
         "Absolute garbage update, crashes every 5 seconds 🗑️",
@@ -64,7 +81,7 @@ def test_batch_predict(client):
     assert data["total_processed"] == 5
     assert len(data["results"]) == 5
     # Batch latency should be under 50ms for 5 posts
-    assert data["batch_latency_ms"] < 50.0
+    assert data["batch_latency_ms"] < BATCH5_BUDGET_MS
 
 def test_sarcasm_marker_triggers_fallback(client):
     payload = {

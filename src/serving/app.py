@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import time
@@ -9,7 +10,8 @@ try:
     import psutil
 except Exception:
     psutil = None
-from fastapi import FastAPI, HTTPException, UploadFile, File
+import secrets
+from fastapi import Depends, FastAPI, Header, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
@@ -19,6 +21,8 @@ from src.preprocessing.context_analyzer import ContextAnalyzer
 from src.preprocessing.aspect_extractor import AspectExtractor
 from src.multimodal import MultimodalPipeline
 from src.serving.cache import SentimentLRUCache
+from src.serving.cascade import Cascade, classify_batch, news_probability
+from src.models.student_onnx import StudentClassifier
 from src.serving.active_learning import ActiveLearningQueue, ActiveLearningBuffer
 from src.serving.fallback import FallbackService
 from src.serving.schemas import (
@@ -48,10 +52,11 @@ aspect_extractor: Optional[AspectExtractor] = None
 cache: Optional[SentimentLRUCache] = None
 active_learning: Optional[ActiveLearningQueue] = None
 fallback_service: Optional[FallbackService] = None
+cascade: Optional[Cascade] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model, pipeline, context_analyzer, aspect_extractor, cache, active_learning, fallback_service, multimodal_pipeline
+    global model, pipeline, context_analyzer, aspect_extractor, cache, active_learning, fallback_service, multimodal_pipeline, cascade
     print("Initializing sentiment engine runtime...")
     
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -86,9 +91,60 @@ async def lifespan(app: FastAPI):
         print(f"Sentiment model successfully loaded from {model_joblib}")
     else:
         print(f"WARNING: Model not found at {model_gz}. Predictions will fail until trained.")
-        
+
+    # Tier 2: distilled multilingual transformer (optional; set DISABLE_TRANSFORMER=1 to run TF-IDF only)
+    student = None
+    student_dir = os.path.join(project_root, "models", "student")
+    if os.getenv("DISABLE_TRANSFORMER") != "1" and StudentClassifier.available(student_dir):
+        try:
+            student = StudentClassifier(student_dir, threads=int(os.getenv("TRANSFORMER_THREADS", "1")))
+            student.predict_batch(["warm up the onnxruntime session"])  # pay one-off init cost at startup
+            print(f"Transformer tier loaded from {student_dir}")
+        except Exception as e:
+            print(f"WARNING: transformer tier failed to load ({e}); serving TF-IDF only.")
+    # English expert: Twitter RoBERTa for short English social posts (DISABLE_ENGLISH_EXPERT=1 turns it off)
+    expert = None
+    expert_dir = os.path.join(project_root, "models", "english_expert")
+    if (student is not None and os.getenv("DISABLE_ENGLISH_EXPERT") != "1"
+            and StudentClassifier.available(expert_dir)):
+        try:
+            expert = StudentClassifier(expert_dir, threads=int(os.getenv("TRANSFORMER_THREADS", "1")))
+            expert.predict_batch(["warm up the english expert"])
+            print(f"English expert loaded from {expert_dir}")
+        except Exception as e:
+            print(f"WARNING: English expert failed to load ({e}); continuing without it.")
+    cascade = Cascade(student=student, expert=expert)
+    news_probability(["warm up"])  # load the news detector before requests can race on it
+
     yield
     print("Shutting down sentiment engine runtime...")
+
+def _configured_api_keys() -> List[str]:
+    """Keys from SENTIMENT_API_KEYS (comma-separated). Empty -> authentication is off (local dev, tests)."""
+    return [k.strip() for k in os.getenv("SENTIMENT_API_KEYS", "").split(",") if k.strip()]
+
+
+async def require_api_key(x_api_key: Optional[str] = Header(None),
+                          authorization: Optional[str] = Header(None)) -> None:
+    """Accepts 'X-API-Key: <key>' or 'Authorization: Bearer <key>'. Constant-time comparison."""
+    keys = _configured_api_keys()
+    if not keys:
+        return
+    candidates = [x_api_key or ""]
+    if authorization and authorization.lower().startswith("bearer "):
+        candidates.append(authorization[7:].strip())
+    # accept if any supplied credential matches any configured key (compare all, constant time each)
+    matched = False
+    for c in candidates:
+        for k in keys:
+            if c and secrets.compare_digest(c.encode(), k.encode()):
+                matched = True
+    if not matched:
+        raise HTTPException(status_code=401, detail="Missing or invalid API key",
+                            headers={"WWW-Authenticate": "Bearer"})
+
+
+PROTECTED = [Depends(require_api_key)]
 
 app = FastAPI(
     title="Lightweight Sentiment Microservice",
@@ -118,7 +174,7 @@ async def health_check():
         version="1.2.0"
     )
 
-@app.get("/metrics", response_model=MetricsResponse)
+@app.get("/metrics", response_model=MetricsResponse, dependencies=PROTECTED)
 async def get_metrics():
     total_posts = METRICS["total_posts_analyzed"]
     fallback_pct = (METRICS["total_fallbacks_triggered"] / total_posts * 100) if total_posts > 0 else 0.0
@@ -134,7 +190,7 @@ async def get_metrics():
         active_learning_queued=active_learning.count_queued() if active_learning else 0
     )
 
-@app.get("/api/v1/sentiment/active_learning")
+@app.get("/api/v1/sentiment/active_learning", dependencies=PROTECTED)
 async def get_active_learning_samples(limit: int = 50):
     if not active_learning or not os.path.exists(active_learning.log_path):
         return {"total_queued": 0, "samples": []}
@@ -152,8 +208,8 @@ async def get_active_learning_samples(limit: int = 50):
         "recent_samples": samples[-limit:]
     }
 
-@app.post("/predict", response_model=SentimentPredictResponse)
-@app.post("/api/v1/sentiment/predict", response_model=SentimentPredictResponse)
+@app.post("/predict", response_model=SentimentPredictResponse, dependencies=PROTECTED)
+@app.post("/api/v1/sentiment/predict", response_model=SentimentPredictResponse, dependencies=PROTECTED)
 async def predict_sentiment(req: SentimentPredictRequest):
     if not model or not model.is_trained:
         raise HTTPException(status_code=503, detail="Sentiment model is not loaded.")
@@ -193,7 +249,7 @@ async def predict_sentiment(req: SentimentPredictRequest):
             cache_hits += 1
             if req.extract_aspects and not cached_item.get("aspects") and aspect_extractor:
                 cached_item["aspects"] = aspect_extractor.extract_aspects(text)
-            resolved_results[i] = SentimentPredictionItem(**cached_item)
+            resolved_results[i] = SentimentPredictionItem(**{**cached_item, "cached": True})
         else:
             texts_to_process.append((i, text, ctx))
             
@@ -203,31 +259,26 @@ async def predict_sentiment(req: SentimentPredictRequest):
         uncached_texts = [item[1] for item in texts_to_process]
         uncached_contexts = [item[2] for item in texts_to_process]
         
-        # Preprocess in batch
-        processed_texts = []
-        metas = []
-        for t in uncached_texts:
-            proc_t, meta = pipeline.process(t)
-            processed_texts.append(proc_t)
-            metas.append(meta)
-            
-        # Model predictions
-        preds = model.predict_batch(processed_texts, confidence_threshold=req.confidence_threshold)
-        
-        # Analyze each uncached prediction
+        # Tier 1 (TF-IDF + rules) and, where needed, tier 2 (transformer). See src/serving/cascade.py.
+        # CPU-bound (transformer inference): run it in a worker thread so /health and other requests aren't blocked
+        decisions = await asyncio.to_thread(
+            classify_batch, uncached_texts, uncached_contexts, model, pipeline, context_analyzer, cascade)
+
         for idx, orig_idx in enumerate(uncached_indices):
             raw_t = uncached_texts[idx]
             ctx = uncached_contexts[idx]
-            pred = preds[idx]
-            meta = metas[idx]
-            
-            # Apply contextual reasoning (Culture Tropes + Contextual Parent Post Mismatch)
-            final_label, conf, ctx_fallback, reason = context_analyzer.analyze(
-                raw_t, pred["label"], pred["confidence"], context=ctx
-            )
-            
-            needs_fallback = ctx_fallback or (conf < req.confidence_threshold) or meta.get("sarcasm_detected", False)
-            if meta.get("sarcasm_detected", False) and (not reason or reason == "model_inference"):
+            d = decisions[idx]
+            meta = d["meta"]
+            # the deciding model's own view; used below to re-shape probabilities when a rule overrode it
+            pred = {"label": max(d["probabilities"], key=d["probabilities"].get),
+                    "probabilities": {k: round(v, 4) for k, v in d["probabilities"].items()}}
+            final_label, conf, ctx_fallback, reason = d["label"], d["confidence"], d["ctx_fallback"], d["reason"]
+
+            needs_fallback = (ctx_fallback or d["uncertain"] or (conf < req.confidence_threshold)
+                              or meta.get("sarcasm_detected", False))
+            # an explicit sarcasm marker ("/s", "yeah right") is reported as the reason whichever tier answered
+            if meta.get("sarcasm_detected", False) and (not reason or reason == "model_inference"
+                                                        or reason.startswith(("transformer_", "english_expert"))):
                 reason = "sarcasm_detected"
                 
             fallback_res = None
@@ -319,7 +370,10 @@ async def predict_sentiment(req: SentimentPredictRequest):
                 fallback_result=fallback_res,
                 is_performance_issue=is_perf,
                 is_risk_complaint=is_risk,
-                is_mixed=is_mixed
+                is_mixed=is_mixed,
+                tier=d["tier"],
+                content_type=d["content_type"],
+                uncertain=d["uncertain"]
             )
             
             # Store into LRU cache (with context hashing)
@@ -351,7 +405,7 @@ async def predict_sentiment(req: SentimentPredictRequest):
     )
 
 
-@app.post("/analyze/file", response_model=MultimodalAnalysisResponse)
+@app.post("/analyze/file", response_model=MultimodalAnalysisResponse, dependencies=PROTECTED)
 async def analyze_file(file: UploadFile = File(...)):
     """
     Universal Multimodal Analyzer: Ingests any file (Image, Video, PDF, DOCX, CSV, TXT, JSON)
@@ -366,7 +420,7 @@ async def analyze_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze file: {str(e)}")
 
-@app.post("/analyze/image", response_model=MultimodalAnalysisResponse)
+@app.post("/analyze/image", response_model=MultimodalAnalysisResponse, dependencies=PROTECTED)
 async def analyze_image(file: UploadFile = File(...)):
     """Dedicated Image and Meme Analyzer with Native OCR and Visual Cues."""
     if not multimodal_pipeline:
@@ -378,7 +432,7 @@ async def analyze_image(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze image: {str(e)}")
 
-@app.post("/analyze/video", response_model=MultimodalAnalysisResponse)
+@app.post("/analyze/video", response_model=MultimodalAnalysisResponse, dependencies=PROTECTED)
 async def analyze_video(file: UploadFile = File(...)):
     """Dedicated Video Analyzer with Keyframe Sampling and On-screen Subtitle OCR."""
     if not multimodal_pipeline:
@@ -390,7 +444,7 @@ async def analyze_video(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze video: {str(e)}")
 
-@app.post("/analyze/document", response_model=MultimodalAnalysisResponse)
+@app.post("/analyze/document", response_model=MultimodalAnalysisResponse, dependencies=PROTECTED)
 async def analyze_document(file: UploadFile = File(...)):
     """Dedicated Document Analyzer (PDF, Word DOCX, TXT, CSV)."""
     if not multimodal_pipeline:

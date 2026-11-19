@@ -3,8 +3,10 @@ import sys
 import json
 import time
 
-# Ensure project root in python path
-project_root = r"C:\Users\salun\OneDrive - smarttech\Desktop\D folder\sentiment-engine"
+# Repo root (for src imports and model output) and data root (for raw/processed data).
+# Set SENTIMENT_DATA_ROOT to read data from another checkout (data/ is gitignored).
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+data_root = os.environ.get("SENTIMENT_DATA_ROOT", project_root)
 sys.path.insert(0, project_root)
 
 from src.models.pure_tfidf import PureSentimentClassifier
@@ -19,9 +21,10 @@ def load_all_training_data():
     texts = []
     labels = []
 
-    # 1. Load TweetEval Train, Val, Test
-    tweeteval_dir = os.path.join(project_root, "data", "raw", "tweeteval")
-    for split in ["train", "val", "test"]:
+    # 1. Load TweetEval Train + Val only. The test split is the held-out benchmark
+    #    used by scripts/benchmark_tweeteval.py and must never be trained on.
+    tweeteval_dir = os.path.join(data_root, "data", "raw", "tweeteval")
+    for split in ["train", "val"]:
         t_file = os.path.join(tweeteval_dir, f"{split}_text.txt")
         l_file = os.path.join(tweeteval_dir, f"{split}_labels.txt")
         if os.path.exists(t_file) and os.path.exists(l_file):
@@ -33,7 +36,7 @@ def load_all_training_data():
                 labels.extend(l_lines)
 
     # 2. Load Processed JSON splits if available
-    proc_dir = os.path.join(project_root, "data", "processed")
+    proc_dir = os.path.join(data_root, "data", "processed")
     for split in ["train", "val", "test"]:
         p_file = os.path.join(proc_dir, f"{split}.json")
         if os.path.exists(p_file):
@@ -46,6 +49,19 @@ def load_all_training_data():
                     if txt and lbl in ["positive", "negative", "neutral"]:
                         texts.append(txt)
                         labels.append(lbl)
+
+    # 3. Drop anything identical to a TweetEval test tweet, in case another source contains it
+    test_file = os.path.join(tweeteval_dir, "test_text.txt")
+    if os.path.exists(test_file):
+        norm = lambda s: " ".join(s.lower().split())
+        with open(test_file, "r", encoding="utf-8") as f:
+            held_out = {norm(line) for line in f}
+        kept = [(t, l) for t, l in zip(texts, labels) if norm(t) not in held_out]
+        removed = len(texts) - len(kept)
+        if removed:
+            print(f"Removed {removed:,} samples that duplicate TweetEval test tweets")
+        texts = [t for t, _ in kept]
+        labels = [l for _, l in kept]
 
     print(f"Total Combined Training Samples: {len(texts):,}")
     label_counts = {}

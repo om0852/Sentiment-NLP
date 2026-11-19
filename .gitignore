@@ -14,6 +14,8 @@ __pycache__/
 data/feedback_queue.jsonl
 data/raw/
 data/processed/
+data/gold/
+data/silver/
 
 # Keep models and dictionaries
 !models/sentiment_model.joblib
@@ -35,3 +37,10 @@ data/processed/
 *.mp3
 *.pdf
 *.docx
+
+# Colab exchange files (contain user posts); the notebook and zip builder are committed
+colab/*.csv
+colab/*.zip
+
+# Local evaluation reports (contain user posts)
+reports/

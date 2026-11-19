@@ -1,0 +1,28 @@
+# Oracle Cloud Always Free, Ampere A1 (ARM64): 1 OCPU, 6 GB RAM.
+# Build and run on the instance itself:  docker compose -f deploy/oracle/docker-compose.yml up -d --build
+services:
+  sentiment:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: sentiment-engine:arm64
+    container_name: sentiment
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: "8000"
+      # 1 OCPU on Ampere = 1 physical core. One inference thread per request keeps latency predictable;
+      # FastAPI runs inference in worker threads, so concurrent requests share the core.
+      TRANSFORMER_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      # Set to "1" to fall back to the TF-IDF-only engine (much faster, less accurate).
+      DISABLE_TRANSFORMER: "0"
+    cpus: 1.0
+    mem_limit: 2g          # engine uses ~550 MB; the rest of the 6 GB stays free for the OS and docker builds
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

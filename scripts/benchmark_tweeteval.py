@@ -9,7 +9,8 @@ from typing import List, Dict
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Ensure project root in python path
-project_root = r"C:\Users\salun\OneDrive - smarttech\Desktop\D folder\sentiment-engine"
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+data_root = os.environ.get("SENTIMENT_DATA_ROOT", project_root)
 sys.path.insert(0, project_root)
 
 from src.preprocessing.pipeline import PreprocessingPipeline
@@ -23,7 +24,7 @@ LABEL_MAP = {
 }
 
 def fetch_tweeteval_test_set() -> List[Dict[str, str]]:
-    raw_dir = os.path.join(project_root, "data", "raw")
+    raw_dir = os.path.join(data_root, "data", "raw")
     os.makedirs(raw_dir, exist_ok=True)
     cache_file = os.path.join(raw_dir, "tweeteval_sentiment_test.json")
 
