@@ -29,7 +29,7 @@ Three tiers, chosen per post by `src/serving/cascade.py`:
 
 | Tier | Model | Gets |
 | :--- | :--- | :--- |
-| `transformer` | 12-layer multilingual MiniLM (int8 ONNX, 45 MB), trained on ~16k of our real posts labelled by Codex (~89% agreement with careful manual labels) + TweetEval | Most posts: long posts, news, Hindi/Marathi and other scripts |
+| `transformer` | 12-layer multilingual MiniLM (int8 ONNX, 45 MB), v4: trained on ~35k listening posts across all clients and platforms labelled by Claude, ~16k real posts labelled by Codex, and TweetEval | Most posts: long posts, news, Hindi/Marathi and other scripts |
 | `english_expert` | `cardiffnlp/twitter-roberta-base-sentiment-latest` (int8 ONNX, 125 MB in 3 parts) | Short English social posts (< 140 chars, Latin script, not Hinglish, not news) |
 | `tfidf` | Original TF-IDF + hand-written rules | Posts where a rule fires, romanized Hinglish, tiny posts, posts it is ≥90% sure about |
 
@@ -46,6 +46,26 @@ See [docs/ACCURACY_PIPELINE.md](docs/ACCURACY_PIPELINE.md) for how each piece is
 | Hard sets (`benchmark_hard_50.py` / `_set_2.py`) | 38% / 44% | 42% / 32% | 40% / 20% | **54%** / 36% | 50% / 46% | 42% / 42% |
 
 Reproduce with `python scripts/benchmark_external_models.py` (it downloads the two comparison models).
+The table above was measured with the v2 transformer; v4 results follow.
+
+**v4 transformer (2026-11-19).** Retrained on ~38k fresh listening posts (Apr–May 2026, every client and platform),
+labelled by Claude agents per the labelling guide, not by the stored library labels (which agree with Claude only 51% of the time).
+Two independent Claude labellers agreed on 93.5% of a 2,000-post pilot. Scored on 1,000 random posts from the same
+export that were held out of training:
+
+| Accuracy, 3-class | v2 | **v4** |
+| :--- | :--- | :--- |
+| **Fresh listening posts, all clients** (1,000 held out), light mode as deployed | 70.8% | **80.4%** |
+| ↳ same, full mode (+ English expert) | 71.1% | 78.6% |
+| Older listening export (142, Claude labels), light | 74.6% | 76.1% |
+| Real posts, Codex labels (651), light / full | 74.5% / 76.2% | 75.6% / 77.3% |
+| Real posts, Claude labels (182), light / full | 78.0% / 77.5% | 76.9% / 76.9% |
+| TweetEval test (12,284), light / full | 67.2% / 71.4% | 67.2% / 71.4% |
+| Hard sets 1 / 2, full | 52% / 38% | 52% / 40% |
+
+Most of v4's gain comes from fixing posts that v2 wrongly called neutral: positive→neutral errors fell from 128 to 63 and negative→neutral from 73 to 41.
+In this table, a prediction counts as right when it matches any label the set allows. That rule differs slightly from the table above,
+so compare numbers within a table, not across tables.
 
 | Resource (laptop CPU, 1 thread, 600 random real posts) | Measured |
 | :--- | :--- |

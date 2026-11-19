@@ -59,7 +59,7 @@ def load_llm_labels(paths):
     return labels
 
 
-def load_data(llm_paths=(), silver_mode="agree", extra_teacher="", extra_min_conf=0.8):
+def load_data(llm_paths=(), silver_mode="agree", extra_teacher="", extra_min_conf=0.8, labelled_paths=()):
     """Training rows from real posts plus TweetEval train/val.
 
     For each real post: an LLM label (if any) wins; the teacher's soft probabilities are kept only when the teacher
@@ -122,10 +122,47 @@ def load_data(llm_paths=(), silver_mode="agree", extra_teacher="", extra_min_con
                 added += 1
         print(f"second teacher: soft targets on {agreed:,} labelled rows; added {added:,} confident extra English "
               f"posts -> train {len(train):,}", flush=True)
+    # a post already present in another source would otherwise land in two splits (train + val/calib)
+    seen = {_norm(x["text"]) for x in train + val + calib}
+    for path in labelled_paths:
+        added = collections.Counter()
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                r = json.loads(line)
+                if r.get("label") not in L2I or not (r.get("text") or "").strip() or not r.get("id"):
+                    added["skipped_invalid"] += 1
+                    continue
+                key = _norm(r["text"])
+                if key in seen:
+                    added["skipped_duplicate"] += 1
+                    continue
+                seen.add(key)
+                b = bucket(r["id"])
+                dest = val if b < 4 else calib if b < 8 else train
+                dest.append({"text": r["text"], "label": L2I[r["label"]], "soft": None, "src": "labelled"})
+                added["val" if b < 4 else "calib" if b < 8 else "train"] += 1
+        print(f"labelled posts from {os.path.basename(path)}: {dict(added)} -> train {len(train):,} val {len(val):,} "
+              f"calib {len(calib):,}", flush=True)
     return train, val, calib
 
 
-def corpus_texts(gold_ids):
+def file_md5(path):
+    """Content hash, so the vocabulary cache changes whenever a labelled corpus changes (shared with colab/build_colab_zip.py)."""
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def labelled_texts(paths):
+    for path in paths:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                yield json.loads(line).get("text") or ""
+
+
+def corpus_texts(gold_ids, labelled_paths=()):
     """All non-gold post texts plus TweetEval train/val, used only to decide which tokens to keep."""
     with open(os.path.join(data_root, "data", "raw", "posts_300k.json"), encoding="utf-8") as f:
         for p in json.load(f):
@@ -135,6 +172,7 @@ def corpus_texts(gold_ids):
     for split in ["train", "val"]:
         with open(os.path.join(te_dir, f"{split}_text.txt"), encoding="utf-8") as f:
             yield from (line.strip() for line in f)
+    yield from labelled_texts(labelled_paths)
 
 
 def main():
@@ -153,6 +191,8 @@ def main():
                     help="use teacher+DB-agreement posts that have no LLM label")
     ap.add_argument("--out-dir", default="", help="where to write the model (default models/student)")
     ap.add_argument("--extra-teacher", default="", help="data/silver/roberta_soft.jsonl from scripts/teacher_soft_labels.py")
+    ap.add_argument("--labelled", action="append", default=[],
+                    help="jsonl of directly labelled posts {id, text, label} (e.g. Claude-labelled listening export)")
     ap.add_argument("--extra-min-conf", type=float, default=0.8,
                     help="extra unlabelled posts join training only when the second teacher is this confident")
     args = ap.parse_args()
@@ -172,7 +212,8 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     tok = AutoTokenizer.from_pretrained(TOKENIZER_SRC)
-    train, val, calib = load_data(args.llm_labels, args.silver_mode, args.extra_teacher, args.extra_min_conf)
+    train, val, calib = load_data(args.llm_labels, args.silver_mode, args.extra_teacher, args.extra_min_conf,
+                                  args.labelled)
     if args.max_train:
         random.shuffle(train)
         train = train[: args.max_train]
@@ -181,7 +222,9 @@ def main():
     with open(os.path.join(data_root, "data", "gold", "gold_ids.json")) as f:
         gold_ids = set(json.load(f))
     # cache key covers everything that changes the counts: tokenizer, max_len and which posts are excluded
-    key = hashlib.md5(f"{TOKENIZER_SRC}|{args.max_len}|{sorted(gold_ids)}".encode()).hexdigest()[:10]
+    corpus_id = "|".join(f"{os.path.basename(p)}:{file_md5(p)}" for p in args.labelled)
+    key_src = f"{TOKENIZER_SRC}|{args.max_len}|{sorted(gold_ids)}" + (f"|{corpus_id}" if corpus_id else "")
+    key = hashlib.md5(key_src.encode()).hexdigest()[:10]
     counts_cache = os.path.join(data_root, "data", "silver", f"token_counts_{key}.json")
     t0 = time.time()
     if os.path.exists(counts_cache):
@@ -190,7 +233,7 @@ def main():
     else:
         counts = collections.Counter()
         batch = []
-        for text in corpus_texts(gold_ids):
+        for text in corpus_texts(gold_ids, args.labelled):
             batch.append(text)
             if len(batch) == 2000:
                 for ids in tok(batch, truncation=True, max_length=args.max_len,

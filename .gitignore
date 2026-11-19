@@ -41,3 +41,6 @@ data/silver/
 # Colab exchange files (contain user posts); the notebook and zip builder are committed
 colab/*.csv
 colab/*.zip
+
+# Local evaluation reports (contain user posts)
+reports/

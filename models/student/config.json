@@ -5,11 +5,10 @@
     "positive"
   ],
   "max_len": 128,
-  "temperature": 1.2074,
+  "temperature": 1.2817,
   "base_model": "microsoft/Multilingual-MiniLM-L12-H384",
   "layers": 12,
   "teacher": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
   "kept_vocab": 60004,
-  "val_accuracy": 0.7558,
-  "training_labels": "Codex-labelled real posts (15,964) + TweetEval train/val"
+  "val_accuracy_silver": 0.7999
 }
